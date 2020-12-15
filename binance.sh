@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.6  oct/2020  by mountaineerbr
+# v0.10.7  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -67,13 +67,13 @@ SYNOPSIS
 	Some functions use curl/wget to fetch data from REST APIs and
 	some use the websocat package to fetch data from websockets.
 
-	Setting options for REST APIs instead of websockets update
-	little slower because REST depend on connecting repeatedly,
-	whereas websockets leave an open connection.
-
 	Option -r uses curl or wget to fetch data instead of opening
 	a websocket, defaults sleep time (seconds) between consecutive
 	calls is $RSLEEP .
+
+	Setting options for REST APIs instead of websockets update
+	little slower because REST depend on connecting repeatedly,
+	whereas websockets leave an open connection.
 
 
 LIMITS ON WEBSOCKET
@@ -143,8 +143,8 @@ USAGE EXAMPLES
 			$ $SN -l  |  grep BTC
 
 
-			OBS: \"grep '^BTC'\" match markets starting
-			with BTCxxx; \"grep 'BTC$'\" match markets
+			OBS: \"grep '^BTC'\" matches markets starting
+			with BTCxxx; \"grep 'BTC$'\" matches markets
 			ending  with xxxBTC.
 
 
