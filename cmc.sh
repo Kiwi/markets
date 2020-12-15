@@ -1,6 +1,6 @@
 #!/bin/bash
 # cmc.sh -- coinmarketcap.com api access
-# v0.11.4  oct/2020  by mountaineerbr
+# v0.11.5  dec/2020  by mountaineerbr
 
 #your cmc api key
 #CMCAPIKEY=
@@ -280,8 +280,15 @@ mcapf() {
 	#-d dominance opt
 	if [[ -n "${DOMOPT}" ]]
 	then
-		printf "BTC: %'.2f %%\n" "$(jq -r '.data.btc_dominance' <<< "${CMCGLOBAL}")"
-		printf "ETH: %'.2f %%\n" "$(jq -r '.data.eth_dominance' <<< "${CMCGLOBAL}")"
+		btc="$(jq -r '.data.btc_dominance' <<< "${CMCGLOBAL}")"
+		eth="$(jq -r '.data.eth_dominance' <<< "${CMCGLOBAL}")"
+		oth="$( bc <<<"scale=8; 100 - ($btc + $eth)/1" )"
+		sum="$( bc <<<"scale=8; ($btc + $eth + $oth)/1" )"
+
+		printf "BTC: %8.4f %%\n" "$btc"
+		printf "ETH: %8.4f %%\n" "$eth"
+		printf "Oth: %8.4f %%\n" "$oth"
+		printf "Sum: %8.4f %%\n" "$sum"
 		exit 0
 	fi
 
