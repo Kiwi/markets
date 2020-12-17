@@ -1,6 +1,6 @@
 #!/bin/bash
 # Uol.sh -- Puxa cotações do portal do UOL
-# v0.2.22  dec/2020  by mountaineer_br
+# v0.2.23  dec/2020  by mountaineer_br
 
 #defaults
 #column separator for the -a opt
@@ -352,10 +352,7 @@ lstocksf() {
 		fi
 
 		#choose a browser to process html
-		if command -v lynx &>/dev/null
-		then
-			lynx -force_html -dump -nolist -stdin
-		elif command -v w3m &>/dev/null
+		if command -v w3m &>/dev/null
 		then
 			w3m -dump -T text/html
 		elif command -v links &>/dev/null
@@ -364,6 +361,9 @@ lstocksf() {
 			cat >"$tmp"
 			links -force-html -dump "$tmp"
 			rm "$tmp"
+		elif command -v lynx &>/dev/null
+		then
+			lynx -force_html -dump -nolist -stdin
 		elif command -v elinks &>/dev/null
 		then
 			elinks -force-html -dump
