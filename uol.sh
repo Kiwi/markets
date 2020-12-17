@@ -1,6 +1,6 @@
 #!/bin/bash
 # Uol.sh -- Puxa cotações do portal do UOL
-# v0.2.21  sep/2020  by mountaineer_br
+# v0.2.22  dec/2020  by mountaineer_br
 
 #defaults
 #column separator for the -a opt
@@ -107,8 +107,8 @@ OPÇÕES
 	-ddd 	Séries dólar turismo e comercial históricas.
 	-h 	Mostra esta ajuda.
 	-j 	Debug, imprime json.
-	-l 	Lista algumas ações do uol economia (dados ao vivo).
-	-ll 	Lista longa de ações, moedas e seus números de id (fixa).
+	-l 	Lista ações da B3 pela infomoney (dados ao vivo).
+	-ll 	Lista longa de ações, moedas e seus números de id (list fixa).
 	-m 	Cotação dos metais preciosos.
 	-v 	Mostra versão do script." 
 
@@ -118,6 +118,7 @@ hf() {  sed 's/<[^>]*>//g';}
 
 #helper func opt -a
 procf() {
+	printf '\033[2K' >&2
 	sed 's/\r//g' |
 		jq -r '.docs|reverse[]|"\(.abbreviation//.name)'$SEP'\(.price//.askvalue)'$SEP'\(.high//.maxbid//"-")'$SEP'\(.low//.minbid//"-")'$SEP'\(.open//"-")'$SEP'\(.close//"-")'$SEP'\(.change//.variationbid//"-")'$SEP'\(.pctChange//.variationpercentbid//"-")%'$SEP'\(.date)'$SEP'\(.exchangeasset//"")"' |
 		sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3T\4:\5:\6/'
@@ -136,7 +137,6 @@ loopf() {
 
 		#change incremental value
 		i=$(( i + inc )); f=$(( f + inc ))
-		##printf '\033[2K\r' 1>&2  #clear stderr?
 
 		#try not to miss any one page of results
 		MAX=4
@@ -162,12 +162,13 @@ loopf() {
 		unset COUNTER
 		
 		#loading bar sent to stderr, align to rightmost
-		printf "${RED}%*s ${ENDC} \r" $(( COLUMNS - 2 )) ">$(( f - inc ))+${inc}/${max}" 1>&2
+		printf "${RED}>>>%s/%s [+%s]${ENDC} \r" "$(( f - inc ))" "${max}" "${inc}" 1>&2
 		
 		#don't be naughty to the server
 		sleep 0.8
 	done
 }
+##printf '\033[2K\r' 1>&2  #clear stderr?
 
 #-a scrape de cotações
 scrapef() {
@@ -221,7 +222,7 @@ b3f() {
 		fi
 		
 		#simple tickers
-		if [[ "${B3OPT}" = 1 ]]; then
+		if ((B3OPT==1)); then
 			printf 'UOL - Bovespa B3\n'
 			jq -r '.docs[0]|
 				"Data   : \(.date)",
@@ -258,7 +259,7 @@ dolarf() {
 	#subfunction
 	tablef() { jq -r '.docs|reverse[]|"\(.bidvalue)\t\(.askvalue)\t\(.maxbid)\t\(.minbid)\t\(.variationbid)\t\(.variationpercentbid)%\t\(.date)"' | sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3T\4:\5:\6/' | column -ets$'\t' -NCOMPRA,VENDA,MAX,MIN,VAR,VAR%,DATA -TDATA;}
 
-	if [[ "${DOLAROPT}" =~ 1|2 ]]; then
+	if ((DOLAROPT<=2)); then
 		#get data
 		DT="$(${YOURAPP} 'https://api.cotacoes.uol.com/currency/intraday/list/?format=JSON&fields=bidvalue,askvalue,maxbid,minbid,variationbid,variationpercentbid,date&currency=3&')"
 		DC="$(${YOURAPP} 'https://api.cotacoes.uol.com/currency/intraday/list/?format=JSON&fields=bidvalue,askvalue,maxbid,minbid,variationbid,variationpercentbid,date&currency=1&')"
@@ -272,7 +273,7 @@ dolarf() {
 		fi
 
 		#simple tickers
-		if [[ "${DOLAROPT}" = 1 ]]; then
+		if ((DOLAROPT==1)); then
 			{
 			#turismo
 			jq -r '.docs[0]|
@@ -334,21 +335,46 @@ dolarf() {
 
 # Lista de ações
 lstocksf() {
-	if [[ "${LSTOCKSOPT}" = 1 ]]; then
-		PRELIST="$(${YOURAPP} "http://cotacoes.economia.uol.com.br/acoes-bovespa.html?exchangeCode=.BVSP&page=1&size=2000" | hf | sed -n "/Nome Código/,/Páginas/p" | sed -e 's/^[ \t]*//' -e '1,2d' -e '/^[[:space:]]*$/d' -e '$d' | sed '$!N;s/\n/=/')"
-		
+	if ((LSTOCKSOPT==1)); then
+		echo 'Ações da Bovespa'
+
+		#not working anymore#
+		#PRELIST="$(${YOURAPP} "http://cotacoes.economia.uol.com.br/acoes-bovespa.html?exchangeCode=.BVSP&page=1&size=2000" | hf | sed -n "/Nome Código/,/Páginas/p" | sed -e 's/^[ \t]*//' -e '1,2d' -e '/^[[:space:]]*$/d' -e '$d' | sed '$!N;s/\n/=/')"
+
+		#from infomoney
+		URL=https://www.infomoney.com.br/cotacoes/empresas-b3/
+		PRELIST="$($YOURAPP "$URL" | sed -n '/<table*/,/<\/table/p')"
+
 		#Debug?
 		if [[ -n "${PJSON}" ]]; then
 			printf "%s\n" "${PRELIST}"
 			exit
 		fi
-		
-		printf 'Ações da Bovespa\n'
-		column -et -s'=' -N'NOME,CÓDIGO' <<<"${PRELIST}"
-		printf 'Items: %s\n' "$(wc -l <<<"${PRELIST}")"
+
+		#choose a browser to process html
+		if command -v lynx &>/dev/null
+		then
+			lynx -force_html -dump -nolist -stdin
+		elif command -v w3m &>/dev/null
+		then
+			w3m -dump -T text/html
+		elif command -v links &>/dev/null
+		then
+			tmp="$(mktemp)"
+			cat >"$tmp"
+			links -force-html -dump "$tmp"
+			rm "$tmp"
+		elif command -v elinks &>/dev/null
+		then
+			elinks -force-html -dump
+		else
+			sed 's/<[^>]*>//g'
+			echo 'could not find a proper command line browser to process html' >&2
+		fi <<<"$PRELIST"
 	else
-		tail -"${LASTLINES}" "${SCRIPT}"
-		printf 'Items: %s\n' "$(tail -"${LASTLINES}" "${SCRIPT}" | grep -c '^[0-9]')"
+		#list from script offline database
+		tail -"$LASTLINES" "$SCRIPT"
+		printf 'Items: %s\n' "$(tail -"$LASTLINES" "$SCRIPT" | grep -c '^[0-9]')"
 	fi
 }
 
@@ -390,33 +416,25 @@ if ! command -v gzip &>/dev/null; then
 fi
 
 #default option if no user input
-[[ -z "${*}" ]] && DOLAROPT=1
+(( $# )) ||  set -- -d
 
 # Parse options
-while getopts ':abdjlmhv' opt; do
+while getopts :abdjlmhv opt; do
 	case ${opt} in
 		a ) #scrape data
 			SCRAPEOPT=1
 			;;
 		b ) #b3 
-			if [[ "${B3OPT}" = 2 ]]; then
-				B3OPT=3
-			else
-				[[ -z "${B3OPT}" ]] && B3OPT=1 || B3OPT=2
-			fi
+			((B3OPT++))
 	      		;;
 		d ) #dolar 
-			if [[ "${DOLAROPT}" = 2 ]]; then
-				DOLAROPT=3
-			else
-				[[ -z "${DOLAROPT}" ]] && DOLAROPT=1 || DOLAROPT=2
-			fi
+			((DOLAROPT++))
 	      		;;
 		j ) #debug, print json
 			PJSON=1
 			;;
 		l ) #lista de ações
-			[[ -z "${LSTOCKSOPT}" ]] && LSTOCKSOPT=1 || LSTOCKSOPT=2
+			((LSTOCKSOPT++))
 	      		;;
 		m ) #cotações metais
 			METAISOPT=1
@@ -430,7 +448,7 @@ while getopts ':abdjlmhv' opt; do
 	      		exit 0
 	      		;;
 		\? )
-	     		printf "Opção inválida: -%s\n" "${OPTARG}" 1>&2
+	     		echo "Opção inválida: -$OPTARG" >&2
 	     		exit 1
 	     		;;
   	esac
@@ -442,63 +460,67 @@ shift $((OPTIND -1))
 #exit 1
 
 #Call opts
-if [[ -n "${B3OPT}" ]]; then
+if ((B3OPT)); then
 	b3f 
-elif [[ -n "${DOLAROPT}" ]]; then
+elif ((DOLAROPT)); then
 	dolarf 
-elif [[ -n "${METAISOPT}" ]]; then
+elif ((METAISOPT)); then
 	metf
-elif [[ -n "${LSTOCKSOPT}" ]]; then
+elif ((LSTOCKSOPT)); then
 	lstocksf
-elif [[ -n "${SCRAPEOPT}" ]]; then
+elif ((SCRAPEOPT)); then
 	scrapef
-fi
-
-#tickeres resumidos
-if [[ "${*}" = *[a-zA-Z]* ]]; then
-	arg=( $(tail -"${LASTLINES}" "${SCRIPT}" | awk -F$'\t' "/$*/ {print \$1}") )
-	if [[ -z "${arg[0]}" ]]; then
-		set -- $(tr 'a-z' 'A-Z' <<<"$*")
-		arg=( $(tail -"${LASTLINES}" "${SCRIPT}" | awk -F$'\t' "toupper(\$0) ~ /$*/ {print \$1}") )
-		[[ -z "${arg[0]}" ]] && exit 1
+else
+	#tickeres resumidos
+	#is that a name?
+	if [[ "$*" = *[a-zA-Z]* ]]; then
+		arg=( $(tail -"$LASTLINES" "$SCRIPT" | awk -F$'\t' "/$*/ {print \$1}") )
+		if [[ -z "${arg[0]}" ]]; then
+			set -- $(tr 'a-z' 'A-Z' <<<"$*")
+			arg=( $(tail -"$LASTLINES" "$SCRIPT" | awk -F$'\t' "toupper(\$0) ~ /$*/ {print \$1}") )
+			[[ -z "${arg[0]}" ]] && exit 1
+		fi
+		set  -- "${arg[0]}"
 	fi
-	set  -- "${arg[0]}"
-fi
 
-if [[ "${*}" =~ ^[0-9]+$ ]]; then
-	{
-	printf 'NUM_ID_: %s\n\n' "$1"
-	#ticker de ações/indexes
-	#ticker de uma ação, por número de id do uol
-	JSON="$(${YOURAPP} "https://api.cotacoes.uol.com/stocks/summary?&item=${1}&fields=openbidvalue,askvalue,variationpercentbid,price,exchangeasset,open,pctChange,date,abbreviation&json=json")"
-
-	jq -r '.docs[]|
-		"Data___: \(.date)",
-		"Nome___: \(.exchangeasset)",
-		"Abbrvia: \(.abbreviation)",
-		"Abertur: \(.open)",
-		"Variaç%: \(.pctChange)",
-		"Preço__: \(.price)"' <<<"${JSON}"
-
-	#ticker de moedas
-	if ((${1}<170)); then
-		#ticker de uma moeda, por número de id do uol
-		JSON="$(${YOURAPP} "https://api.cotacoes.uol.com/currency/summary?&currency=${1}&fields=name,openbidvalue,askvalue,variationpercentbid,price,exchangeasset,open,pctChange,date&json=json")"
+	#is that an ID number?
+	if [[ "$*" =~ ^[0-9]+$ ]]; then
+		{
+		printf 'NUM_ID_: %s\n\n' "$1"
+		#ticker de ações/indexes
+		#ticker de uma ação, por número de id do uol
+		JSON="$(${YOURAPP} "https://api.cotacoes.uol.com/stocks/summary?&item=${1}&fields=openbidvalue,askvalue,variationpercentbid,price,exchangeasset,open,pctChange,date,abbreviation&json=json")"
 
 		jq -r '.docs[]|
-			"",
 			"Data___: \(.date)",
-			"Nome___: \(.name)",
-			"Varia%_: \(.variationpercentbid)",
-			"Venda__: \(.askvalue)",
-			"Compra_: \(.openbidvalue)"' <<<"${JSON}"
+			"Nome___: \(.exchangeasset)",
+			"Abbrvia: \(.abbreviation)",
+			"Abertur: \(.open)",
+			"Variaç%: \(.pctChange)",
+			"Preço__: \(.price)"' <<<"${JSON}"
+
+		#ticker de moedas
+		if ((${1}<170)); then
+			#ticker de uma moeda, por número de id do uol
+			JSON="$(${YOURAPP} "https://api.cotacoes.uol.com/currency/summary?&currency=${1}&fields=name,openbidvalue,askvalue,variationpercentbid,price,exchangeasset,open,pctChange,date&json=json")"
+
+			jq -r '.docs[]|
+				"",
+				"Data___: \(.date)",
+				"Nome___: \(.name)",
+				"Varia%_: \(.variationpercentbid)",
+				"Venda__: \(.askvalue)",
+				"Compra_: \(.openbidvalue)"' <<<"${JSON}"
+		fi
+		#formata data
+		} | sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3T\4:\5:\6/'
+	else
+		exit 1
 	fi
-	#formata data
-	} | sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3T\4:\5:\6/'
 fi
 
-exit
-#next section is printed when option '-ll' is called
+exit 0
+#next section is printed when option -ll is run
 
 
 
