@@ -4,7 +4,7 @@
 # Ourominas não trabalha com Prata!
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 AJUDA="Ourominas.sh -- Puxa as cotações das moedas de Ouro Minas
 

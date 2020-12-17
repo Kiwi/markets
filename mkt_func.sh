@@ -5,7 +5,7 @@
 #compatible with bash and z-shell
  
 #make sure locale is set correctly
-#LC_NUMERIC=en_US.UTF-8
+#export LC_NUMERIC=C
 
 #request compressed response from server
 #alias curl='curl --compressed'

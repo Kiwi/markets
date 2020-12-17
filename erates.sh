@@ -12,7 +12,7 @@ SCRIPTFROMCUR=USD
 SCLDEFAULTS=8  #max=10
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 ## Manual and help
 ## Usage: $ erates.sh [amount] [from currency] [to currency]

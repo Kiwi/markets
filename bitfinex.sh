@@ -9,7 +9,7 @@ DEFMARKET=BTCUSD
 DECDEF=2
 
 #don't change these:
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 # BITFINIEX API DOCS
 #https://docs.bitfinex.com/reference#ws-public-ticker

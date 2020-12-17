@@ -13,7 +13,7 @@ TOCURDEF=BRL
 SCLDEF=8
 
 #don't change these
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 SCRIPT="${BASH_SOURCE[0]:-$0}"
 export SCRIPT
 

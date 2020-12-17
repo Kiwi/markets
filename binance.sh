@@ -22,7 +22,7 @@ SCLDEFAULTS=16
 RSLEEP=2  #defaults=2 seconds
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 HELP="NAME
 	$SN - Market data from Binance public APIs

@@ -15,7 +15,7 @@ SCLDEFAULTS=16
 
 #don't change these
 #set number format
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 #troy ounce to gram ratio
 TOZ=31.1034768

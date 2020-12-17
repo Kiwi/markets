@@ -13,7 +13,7 @@ RED='\e[1;31;40m'
 ENDC='\e[0m'
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 AJUDA="Uol.sh -- Puxa dados do UOL Economia
 

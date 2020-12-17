@@ -3,7 +3,7 @@
 # Free Software under the GNU Public License 3
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 # Ajuda "-h"
 HELP="SINOPSE

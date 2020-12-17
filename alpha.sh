@@ -11,7 +11,7 @@ export ALPHAAPIKEY
 DEFSTOCK=TSLA
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 ## Manual and help
 HELP="NAME

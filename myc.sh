@@ -8,7 +8,7 @@ SCLDEFAULTS=6
 
 #Don't change this:
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 ## Manual and help
 ## Usage: $ myc.sh [amount] [from currency] [to currency]

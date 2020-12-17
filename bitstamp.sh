@@ -7,7 +7,7 @@
 MKTDEF=btcusd
 
 #do not change the following
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 COLOROPT="cat"
 DECIMAL=2
 

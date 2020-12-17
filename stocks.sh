@@ -11,7 +11,7 @@ export FMPKEY
 DEFSTOCK=TSLA
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 #index symbol array
 INDEXARRAY=( .DJI  ^DJT  ^FCHI .INX  ^IXCO .IXIC ^MID  ^NDX  ^NYA 

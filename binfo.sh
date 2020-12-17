@@ -6,7 +6,7 @@
 
 #don't change these
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 #format
 FMT='?format=json'

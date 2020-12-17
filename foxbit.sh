@@ -13,7 +13,7 @@ INTVDEF=24h
 ROLAR=1
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 HELP="SINOPSE
 	foxbit.sh [-pq] [-iINT] [CRIPTOMOEDA]	

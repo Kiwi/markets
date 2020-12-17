@@ -16,7 +16,7 @@ STIME=58m
 RESULTS=100
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 HELP="NAME
 	WhaleAlert.sh -- whale-alert.io API Access

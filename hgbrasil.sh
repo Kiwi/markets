@@ -7,7 +7,7 @@
 export HGBAPIKEY
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 HELP="NOME
 	hgbrasil.sh -- Dados financeiros do HG Brasil Finance

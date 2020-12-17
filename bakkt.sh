@@ -3,7 +3,7 @@
 # v0.1.19  aug/2020  by castaway
 
 #make sure locale is set correctly
-LC_NUMERIC=en_US.UTF-8
+export LC_NUMERIC=C
 
 HELP="SYNOPSIS
 	bakkt.sh [-t]
