@@ -369,8 +369,10 @@ lstocksf() {
 			elinks -force-html -dump
 		else
 			sed 's/<[^>]*>//g'
-			echo 'could not find a proper command line browser to process html' >&2
+			echo 'não foi possível usar um navegador de linha de comando para processar html' >&2
+			echo 'considere instalar um entre w3m, links, lynx ou elinks' >&2
 		fi <<<"$PRELIST"
+		echo "<${URL}>"
 	else
 		#list from script offline database
 		tail -"$LASTLINES" "$SCRIPT"
