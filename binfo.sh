@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.8.31  nov/2020  by mountaineerbr
+# v0.8.32  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -1157,11 +1157,15 @@ else
 		#block by height
 		hblockf "${1}"
 	else
-		#insist?
-		#rblockf "${1}" 2>/dev/null && exit 0
+		#if no option or argument given
+		#default function
+		#summary information of latest block
+		#-l
+		latestf
 		
-		printf 'No option given. Stop.\n' 1>&2
-		exit 1
+
+		#printf 'No option given. Stop.\n' 1>&2
+		#exit 1
 	fi
 fi
 
