@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.20  dec/2020  by mountaineerbr
+# v0.13.22  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -1008,7 +1008,8 @@ curcheckf()
 		#auto try the bank function
 		bankf "${@}"
 		exit
-	elif ! jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${2}$"
+	elif clistf &&
+		! jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${2}$"
 	then
 		printf "ERR: currency -- %s\n" "${2^^}" >&2
 		exit 1
@@ -1258,7 +1259,7 @@ fi
 
 #change .=- to ``bitcoin''
 [[ "$2" = [.=-] ]] && 	set -- "$1" bitcoin "$3"
-[[ "$3" = [.=-] ]] && 	set -- "$1" "$2" bitcoin
+[[ "$3" = [.=-] ]] && 	set -- "$1" "$2" btc
 
 #bank opt?
 #speed up script a little if these testes are met:
