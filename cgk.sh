@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.19  oct/2020  by mountaineerbr
+# v0.13.20  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -43,14 +43,16 @@ SYNOPSIS
 DESCRIPTION
 	This programme fetches updated crypto and bank currency rates
 	from CoinGecko.com and can convert any amount of one supported
-	currency into another. FROM_CURRENCY is a (crypto)currency or
-	metal symbol. For cryptocurrencies, coingecko IDs can be used,
-	too.
+	currency into another.
 
-	List supported currency symbols and IDs with option -l.
-	VS_CURRENCY is a crypto, fiat or metal symbol and defaults to
-	${DEFVSCUR,,}. Currently, about 53 bank currencies (fiat) are
-	supporterd, as well as gold and silver.
+	FROM_CURRENCY is a (crypto)currency or metal symbol. For crypto-
+	currencies, coingecko IDs can be used, too. VS_CURRENCY is a
+	crypto, fiat or metal symbol and defaults to ${DEFVSCUR,,}.
+
+	List supported currency symbols and IDs with option -l. About
+	53 bank currencies (fiat) are supporterd, as well as gold and
+	silver. If FROM or VS_CURRENCY is set to any of .=- , it will
+	mean the same as bitcoin.
 	
 	Central bank currency conversions are supported indirectly by
 	locally calculating them with the cost of one extra call to the
@@ -873,7 +875,7 @@ listsf()
 clistf() 
 {
 	# Check if there is a list or create one
-	if [[ ! -f "$CGKTEMPLIST1" ]]
+	if [[ ! -e "$CGKTEMPLIST1" ]]
 	then
 		# Retrieve list from CGK
 		CGKTEMPLIST1="$TMPD/.cgklist1.json"
@@ -885,7 +887,7 @@ clistf()
 tolistf()
 {
 	# Check if there is a list or create one
-	if [[ ! -f "$CGKTEMPLIST2" ]]
+	if [[ ! -e "$CGKTEMPLIST2" ]]
 	then
 		# Retrieve list from CGK
 		CGKTEMPLIST2="$TMPD/cgklist2.json"
@@ -897,7 +899,7 @@ tolistf()
 # export currency id as GREPID
 changevscf()
 {
-	local symbol="${*,,}"
+	local symbol="${1,,}"
 
 	#is a know fiat?
 	if [[ \ "${FIATCODES[*]}"\  = *\ "$symbol"\ * ]]
@@ -907,7 +909,31 @@ changevscf()
 	fi
 
 	#try to match in currency list
-	if GREPID="$( jq -er ".$symbol" "$CGKTEMPLIST1" 2>/dev/null )" &&
+	if GREPID="$( jq -er ".$symbol // empty" "$CGKTEMPLIST1" )" &&
+		[[ -n "${GREPID//null}" ]]
+	then
+		return 0
+	else
+		unset GREPID
+		return 1
+	fi
+}
+
+# Change currency code to ID in FROM_CURRENCY
+# export currency id as GREPID
+changetocf()
+{
+	local id="${1,,}"
+
+	#is a know fiat?
+	if [[ \ "${FIATCODES[*]}"\  = *\ "$id"\ * ]]
+	then
+		unset GREPID
+		return 1
+	fi
+
+	#try to match in currency list
+	if GREPID="$( jq -r "to_entries| map(select(.value==\"$id\")) | .[] | .key // empty" "$CGKTEMPLIST1" )" &&
 		[[ -n "${GREPID//null}" ]]
 	then
 		return 0
@@ -974,45 +1000,39 @@ satoshif()
 #check currencies (defaults)
 curcheckf()
 {
-	# Bank opt needs this anyways
-	clistf
-	
+	## Check VS_CURRENCY
 	# Make sure "XAG Silver" does not get translated to "XAG Xrpalike Gene"
-	if [[ \ "${FIATCODES[*]}"\  = *\ "${2,,}"\ * ]] ||
-		! jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${2}$"
+	if [[ -z "$BANKFLOCK$TOPT" ]] &&
+		[[ \ "${FIATCODES[*]}"\  = *\ "${2,,}"\ * ]]
 	then
-		#automatically try the bank function
-		if [[ -z "$BANKFLOCK$TOPT" ]]
+		#auto try the bank function
+		bankf "${@}"
+		exit
+	elif ! jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${2}$"
+	then
+		printf "ERR: currency -- %s\n" "${2^^}" >&2
+		exit 1
+	fi
+	
+	## Check TO_CURRENCY
+	if [[ \ "${FIATCODES[*]}"\  != *\ "${3,,}"\ * ]] && {
+		[[ -n "${TOPT}" ]] || tolistf && ! grep -qi "^${3}$" "$CGKTEMPLIST2"
+	}
+	then
+		# Bank opt needs this anyways
+		#auto try the bank function
+		if [[ -z "$BANKFLOCK$TOPT" ]] &&
+			jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${3}$"
 		then
 			bankf "${@}"
-			exit 0
+			exit
 		else
-			printf "ERR: currency -- %s\n" "${2^^}" >&2
-			printf "Check symbol/ID and market pair.\n" >&2
+			printf "ERR: currency -- %s\n" "${3^^}" >&2
 			exit 1
 		fi
 	fi
-	
-	## Check VS_CURRENCY
-	if [[ -z "${TOPT}" ]]
-	then
-		# Bank opt needs this anyways
-		tolistf
 
-		if ! grep -qi "^${3}$" "$CGKTEMPLIST2"
-		then
-			#automatically try the bank function
-			if [[ -z "$BANKFLOCK$TOPT" ]]
-			then
-				bankf "${@}"
-				exit 0
-			else
-				printf "ERR: currency -- %s\n" "${3^^}" >&2
-				printf "Check symbol/ID and market pair.\n" >&2
-				exit 1
-			fi
-		fi
-	fi
+	return 0
 }
 
 #default option - cryptocurrency converter
@@ -1233,37 +1253,34 @@ then
 fi
 
 #set default currencies if none set
-if [[ -z "$2" ]]
-then
-	set -- "$1" "${DEFCUR,,}"
-fi
-if [[ -z "$3" ]]
-then
-	set -- "$1" "$2" "${DEFVSCUR,,}"
-fi
+[[ -z "$2" ]] &&  	set -- "$1" "${DEFCUR,,}"
+[[ -z "$3" ]] && 	set -- "$1" "$2" "${DEFVSCUR,,}"
 
+#change .=- to ``bitcoin''
+[[ "$2" = [.=-] ]] && 	set -- "$1" bitcoin "$3"
+[[ "$3" = [.=-] ]] && 	set -- "$1" "$2" bitcoin
+
+#bank opt?
 #speed up script a little if these testes are met:
-if (( BANK == 0 )) &&
+if (( BANK )) ||
 	[[ \ "${FIATCODES[*]}"\  = *\ "${2,,}"\ * ]]
 then
 	BANK=1
-fi
-
-#bank opt?
-if (( BANK ))
-then
 	bankf "${@}"
 	exit
 fi
 
-## Check currency codes
-curcheckf "$@"
+## Check currencies
+#get coin list
+clistf
 
 # Check if we can get from_currency ID
-if changevscf "$2"
-then
-	set -- "$1" "${GREPID}" "$3"
-fi
+changevscf "$2" && set -- "$1" "$GREPID" "$3"
+changetocf "$3" && set -- "$1" "$2" "$GREPID"
+unset GREPID
+
+## Check currency codes
+curcheckf "$@"
 
 ## Call opt functions
 if (( OPTHIST ))
