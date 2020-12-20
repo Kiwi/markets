@@ -28,11 +28,11 @@ blist()
 	fi
 	
 	#laço para puxar os dados
-	for i in "${@}"
+	for i in "$@"
 	do
-		printf 'Puxando %s..\r' "${i}" 1>&2
+		printf 'Puxando %s..\r' "$i" 1>&2
 	
-		curl -s "https://br.advfn.com/bolsa-de-valores/bovespa/${i}" |
+		curl -s "https://br.advfn.com/bolsa-de-valores/bovespa/$i" |
 			sed 's/<[^>]*>//g' | sed -n '/Ação/,/var ZD_USER/p' |
 			sed -e '1d' -e '$d' -e '/^\s*$/d' -Ee 's/[a-z ]([A-Z0-9]+)$/\t\1/' |
 			column -et -s$'\t' -NNOME,SIMBOLO -TNOME
@@ -45,17 +45,24 @@ blist()
 #'wget -qO-' ou 'curl -sL'
 tesouro()
 {
-	##OUTDATED!
+	local url data
 
-	printf 'cols: Título,Vencimento,Taxa de Rendimento (%% a.a.),Valor Mínimo,Preço Unitário\n'
+	#https://www.tesourodireto.com.br/titulos/precos-e-taxas.htm
+	#http://www.tesouro.fazenda.gov.br/tesouro-direto-precos-e-taxas-dos-titulos
+	url=https://www.tesourodireto.com.br/json/br/com/b3/tesourodireto/service/api/treasurybondsinfo.json
+	
+	data="$(curl -L --compressed --insecure "$url" )"
 
-	#curl -k 'https://www.tesourodireto.com.br/titulos/precos-e-taxas.htm'  --compressed
-	wget -qO- 'http://www.tesouro.fazenda.gov.br/tesouro-direto-precos-e-taxas-dos-titulos' |
-		xmlstarlet format --recover --html 2>/dev/null |
-		xmlstarlet select --html --template --value-of "/html/body/div/div/div/div/div/div/div/div/div/div/table/tbody/tr/td[@class='listing0' or @class='listing' or @class='listing ']" |
-		paste -d ';' - - - - - | column -s';' -dt -NA,B,C,D,E -WA
-		
-	printf '<http://www.tesouro.fazenda.gov.br/tesouro-direto-precos-e-taxas-dos-titulos>\n'
+	#print status
+	jq '.response.TrsrBondMkt' <<<"$data"
+
+	jq -r '.response.TrsrBdTradgList[].TrsrBd |
+		"\(.nm)\t\(.FinIndxs| if .nm == "PREFIXADO" then "" else .nm end)+\(if .anulInvstmtRate == 0 then empty else .anulInvstmtRate end)\t\(.minInvstmtAmt)\t\(.untrInvstmtVal)\t\(.mtrtyDt|.[:10])"' <<<"$data" |
+		sort |
+		column -s$'\t' -NTÍTULO,RENT/ANO,INVEST/MIN,PREÇO,VENCIMENTO -et
+
+	echo "<https://www.tesourodireto.com.br/titulos/precos-e-taxas.htm>"
+
 }
 #https://stackoverflow.com/questions/47593807/how-to-scrape-a-html-table-and-print-it-on-terminal-using-bash
 
@@ -65,20 +72,20 @@ ipcab()
 {
 	#run in subshell
 	(
-	[[ -z "${*}" ]] && printf 'uso: ipcab  ANO/MES  #ANO/MES >= 1980/01\n\n' >&2
+	[[ -z "$*" ]] && printf 'uso: ipcab  ANO/MES  #ANO/MES >= 1980/01\n\n' >&2
 
 	#testar input do usuário, ano maior que 1980
-	set -- "$(tr -d '/.-' <<<"${*}")"
-	[[ -n "${2}" ]] && set -- "${1}${2}"
+	set -- "$(tr -d '/.-' <<<"$*")"
+	[[ -n "$2" ]] && set -- "$1$2"
 	
-	if [[ "${1}" =~ ^[0-9]{4}$ ]] &&
-		(( ${1} >= 1980 )) 2>/dev/null
+	if [[ "$1" =~ ^[0-9]{4}$ ]] &&
+		(( $1 >= 1980 )) 2>/dev/null
 	then
 		set -- "${1}01"
 	fi
 
 	#user arg must be a six-digit integer and before 1980/jan
-	if [[ ! "${1}" =~ ^[0-9]{6}$ ]] || (( ${1} < 198001 )) 2>/dev/null
+	if [[ ! "$1" =~ ^[0-9]{6}$ ]] || (( $1 < 198001 )) 2>/dev/null
 	then
 		#199407 começo do plano real
 		set -- 199501
@@ -93,10 +100,10 @@ ipcab()
 	while read line
 	do
 		val="$( cut -d' ' -f3 <<< "$line" )"
-		tval="$( bc <<< "scale=16; (1+ (${val}/100) ) * ${tval:-1}" )"
-		tvalp="$( bc <<< "scale=16; (${tval}-1) * 100" )"
+		tval="$( bc <<< "scale=16; (1+ ( $val /100) ) * ${tval:-1}" )"
+		tvalp="$( bc <<< "scale=16; ( $tval -1) * 100" )"
 
-		printf "%s%% %'.2f%% %.6f\n" "${line}" "${tvalp}" "${tval}"
+		printf "%s%% %'.2f%% %.6f\n" "$line" "$tvalp" "$tval"
 	done |
 		#make table
 		column -ets' ' -NMes,Ano,Var%Mes,Acu%Total,Fator -OAno,Mes,Var%Mes,Acu%Total,Fator -RVar%Mes,Acu%Total,Fator
@@ -113,17 +120,17 @@ ipcab2()
 	#subshell
 	(
 	#print usage if user did not supply any argument
-	[[ -z "${*}" ]] && printf 'uso: ipcab2 ANO  #ANO >= 1980\n\n' >&2
+	[[ -z "$*" ]] && printf 'uso: ipcab2 ANO  #ANO >= 1980\n\n' >&2
 
 	#testar input do usuário, ano maior que 1980
-	if [[ "${1}" =~ ^[0-9]{4}$ ]] &&
-		(( ${1} >= 1980 )) 2>/dev/null
+	if [[ "$1" =~ ^[0-9]{4}$ ]] &&
+		(( $1 >= 1980 )) 2>/dev/null
 	then
 		set -- "${1}01"
 	fi
 
 	#user arg must be a six-digit integer and before 1980
-	if [[ ! "${1}" =~ ^[0-9]{6}$ ]] || (( ${1} < 1980 )) 2>/dev/null
+	if [[ ! "$1" =~ ^[0-9]{6}$ ]] || (( $1 < 1980 )) 2>/dev/null
 	then
 		#199407 começo do plano real
 		set -- 199501
@@ -139,17 +146,17 @@ ipcab2()
 	yearend="$(( $( date +%Y ) - 1 ))"
 	year="${1:0:4}"
 
-	printf '\nPeríodo %s/jan - %s/dez\n' "${year}" "${yearend}"
+	printf '\nPeríodo %s/jan - %s/dez\n' "$year" "$yearend"
 	
 	while read line
 	do
-		val="$( jq -r '.[]|select( .p == "'${line}'")|.v' <<< "$data" )"
-		tval="$( bc <<< "scale-16; (1+ (${val}/100) ) * ${tval:-1}" )"
-		tvalp="$( bc <<< "scale=16; (${tval}-1) * 100" )"
+		val="$( jq -r ".[]|select( .p == \"${line}\")|.v" <<< "$data" )"
+		tval="$( bc <<< "scale=16; (1+ ( $val /100) ) * ${tval:-1}" )"
+		tvalp="$( bc <<< "scale=16; ( $tval -1) * 100" )"
 		
-		printf "%s dez %s%% %'.2f%% %.6f\n" "${year}" "${val}" "${tvalp}" "${tval}"
+		printf "%s dez %s%% %'.2f%% %.6f\n" "$year" "$val" "$tvalp" "$tval"
 		((year++))
-	done <<< "$( eval printf 'dezembro %s\n' {${year}..${yearend}} )" |
+	done <<< "$( eval printf 'dezembro\ %s\\n' \{$year..$yearend\} )" |
 		#make table
 		column -ets' ' -NAno,Mes,Ac%Ano,Acu%Total,Fator -RAc%Ano,Acu%Total,Fator 
 	)
@@ -189,14 +196,14 @@ ipca2()
 
 #richard heart's hex rate in usd
 hex() {
-	#subshell
-	(
+	local DATA HEXETH ETHUSD
+
 	#header, date
 	date
 
 	DATA="$(curl -s "https://api.exchange.bitcoin.com/api/2/public/ticker")"
-	HEXETH="$(jq -r '.[]|select(.symbol == "HEXETH")|.last' <<<"${DATA}")"
-	ETHUSD="$(jq -r '.[]|select(.symbol == "ETHUSD")|.last' <<<"${DATA}")"
+	HEXETH="$(jq -r '.[]|select(.symbol == "HEXETH")|.last' <<<"$DATA")"
+	ETHUSD="$(jq -r '.[]|select(.symbol == "ETHUSD")|.last' <<<"$DATA")"
 	
 	echo "Bitcoin.com Ticker"
  	column -et -s' ' <<-!
@@ -211,9 +218,6 @@ hex() {
 	
 	command -v cgk.sh &>/dev/null && cgk.sh hex usd | xargs printf 'CoinGecko__:  %.10f\n'
 	command -v cmc.sh &>/dev/null && cmc.sh hex usd | xargs printf 'CoinMktCap_:  %.10f\n'
-	) |
-		#record in file
-		tee -a ~/.hexRecord
 }
 
 #stats from <xe.com>
@@ -253,8 +257,8 @@ kitco()
 	shift $(( OPTIND - 1 ))
 
 	#kitco news
-	if [[ -n "${nopt}" ]]; then
-		curl -s "https://proxy.kitco.com/getvnews?type=json&df=2&max=${nopt}" -H 'Origin: https://www.kitco.com' |
+	if [[ -n "$nopt" ]]; then
+		curl -s "https://proxy.kitco.com/getvnews?type=json&df=2&max=$nopt" -H 'Origin: https://www.kitco.com' |
 			jq  -r '.News.videoNews|reverse[]|.fullHeadline,.publishDate,.description,""' | sed 's/<br\/>//g'
 		return
 	fi
@@ -310,7 +314,7 @@ metals()
 		grep "class='commodity-name'" |
 		sed 's/<div/\n&/g ;s/<[^>]*>//g'
 
-	printf '<https://www.mining.com/markets/>\n'
+	echo '<https://www.mining.com/markets/>'
 }
 #Metals and Commodities
 #Spot - Gold, silver, palladium and platinum are updated every two minutes. Trading time is London, UK time. Spot data is 23 ½ hours
@@ -356,7 +360,7 @@ gfin()
 		column -et -s'$' -NSYMBOL,NAME,DIRECTION,CHANGE,CHANGE%,VALUE,UPDATE,LASTCLOSE,EXCHANGE -TNAME,UPDATE -HDIRECTION,EXCHANGE -OSYMBOL,VALUE,NAME,DIRECTION,CHANGE,CHANGE%,LASTCLOSE,UPDATE,EXCHANGE
 
 }
-#for jspb: .. | sed 's/<[^>]*>//g' | grep -E "\"*[[:digit:]]+.[[:digit:]]+\"" | grep -oP '"\K[^"]+' | grep -Ev -e '^,$' -e 'newwindow' -e 'search' -e '[[:digit:]]+]' -e '^]$' -e 'null' -e '/m/' -e '/g/' | sed -e 's/,.,/\n/g' -e 's/,$//g' -e 's/^,//g' -e 's/\\u0026/\&/g'  #| grep --color=never -i -e "${1}" -A6 -B3
+#for jspb: .. | sed 's/<[^>]*>//g' | grep -E "\"*[[:digit:]]+.[[:digit:]]+\"" | grep -oP '"\K[^"]+' | grep -Ev -e '^,$' -e 'newwindow' -e 'search' -e '[[:digit:]]+]' -e '^]$' -e 'null' -e '/m/' -e '/g/' | sed -e 's/,.,/\n/g' -e 's/,$//g' -e 's/^,//g' -e 's/\\u0026/\&/g'  #| grep --color=never -i -e "$1" -A6 -B3
 #<<quotes are not sourced from all markets and may be delayed by up to 20 minutes.
 #information is provided 'as is' and solely for informational purposes, not for
 #trading purposes or advice.>>
@@ -372,12 +376,12 @@ yfin()
 	#subshell
 	(
 	#parse some opts
-	if [[ "${1}" = -h ]]
+	if [[ "$1" = -h ]]
 	then
 		printf 'usage: yfin [-jh] SYMBOL\n'
 		printf 'option -j to print raw json data\n'
 		return
-	elif [[ "${1}" = -j ]]
+	elif [[ "$1" = -j ]]
 	then
 		PJSON=1
 		shift
@@ -390,17 +394,17 @@ yfin()
 	YJSON="$( curl -sL "https://query1.finance.yahoo.com/v7/finance/quote?symbols=${SYMBOL:-TSLA}&range=1d&interval=5m&indicators=close&includeTimestamps=false&includePrePost=false&corsDomain=finance.yahoo.com&.tsrc=finance" )"
 
 	#print json?
-	if [[ -n "${PJSON}" ]]
+	if [[ -n "$PJSON" ]]
 	then
-		printf '%s\n' "${YJSON}"
+		printf '%s\n' "$YJSON"
 		return
 	#check for error response
-	elif jq -e '.quoteResponse.error' <<< "${YJSON}" &>/dev/null
+	elif jq -e '.quoteResponse.error' <<< "$YJSON" &>/dev/null
 	then
-		jq -r '.quoteResponse.error' <<< "${YJSON}"
+		jq -r '.quoteResponse.error' <<< "$YJSON"
 		return 1
 	#empty response?
-	elif ! jq -e '.quoteResponse.result[]' <<<"${YJSON}" &>/dev/null
+	elif ! jq -e '.quoteResponse.result[]' <<<"$YJSON" &>/dev/null
 	then
 		return 1
 	fi
@@ -408,7 +412,7 @@ yfin()
 	#set timezone for displaying times
 	#export TZ="GMT"
 	#set timezone according to info from yahoo
-	export TZ="$( jq -r '.quoteResponse.result[]|.exchangeTimezoneName//.exchangeTimezoneShortName' <<< "${YJSON}" )"
+	export TZ="$( jq -r '.quoteResponse.result[]|.exchangeTimezoneName//.exchangeTimezoneShortName' <<< "$YJSON" )"
 
 	#format ticker
 	jq -r '.quoteResponse.result[]|
@@ -487,7 +491,7 @@ yfin()
 		"PrevClo: \(.regularMarketPreviousClose)",
 		"Open___: \(.regularMarketOpen)",
 		"Price__: \(.regularMarketPrice)"
-		' <<<"${YJSON}" | grep -Fv 'null' | cat -s
+		' <<<"$YJSON" | grep -Fv 'null' | cat -s
 	)
 }
 #currency
@@ -509,11 +513,11 @@ yfin2()
 	#subshell
 	(
 	#parse some opts
-	if [[ "${1}" = -h ]]
+	if [[ "$1" = -h ]]
 	then
 		printf 'usage: yfin2 [-jh] SYMBOL [RANGE] [GRANULARITY]\n'
 		return
-	elif [[ "${1}" = -j ]]
+	elif [[ "$1" = -j ]]
 	then
 		PJSON=1
 		set -- "${@:2:4}"
@@ -526,21 +530,21 @@ yfin2()
 	YJSON="$( curl -s "https://query1.finance.yahoo.com/v8/finance/chart/${SYMBOL}?region=US&lang=en-US&includePrePost=true&interval=${2:-1d}&range=${3:-1d}&corsDomain=finance.yahoo.com&.tsrc=finance" --compressed )"
 
 	#print json?
-	if [[ -n "${PJSON}" ]]
+	if [[ -n "$PJSON" ]]
 	then
-		printf '%s\n' "${YJSON}"
+		printf '%s\n' "$YJSON"
 		return
 	#check for error response
-	elif jq -er '.chart.error' <<< "${YJSON}" &>/dev/null
+	elif jq -er '.chart.error' <<< "$YJSON" &>/dev/null
 	then
-		jq -r '.chart.error.description' <<< "${YJSON}"
+		jq -r '.chart.error.description' <<< "$YJSON"
 		return 1
 	fi
 
 	#set timezone for displaying times
 	#export TZ="GMT"
 	#set timezone according to info from yahoo
-	export TZ="$( jq -r '.chart.result[].meta.exchangeTimezoneName//.timezone' <<< "${YJSON}" )"
+	export TZ="$( jq -r '.chart.result[].meta.exchangeTimezoneName//.timezone' <<< "$YJSON" )"
 	
 	#print ticker config
 	jq -r '.chart.result[]|
@@ -564,7 +568,7 @@ yfin2()
 					)
 				),
 				""
-			)' <<< "${YJSON}"
+			)' <<< "$YJSON"
 
 	#tickers and indicators
 	jq -r '.chart.result[]|
@@ -595,7 +599,7 @@ yfin2()
 			"MktPrice: \(.regularMarketPrice//empty)"
 			#"PriceHnt: \(.priceHint//empty)"
 		)
-		' <<< "${YJSON}"
+		' <<< "$YJSON"
 	)
 }
 
@@ -607,27 +611,27 @@ ylist()
 	local LISTF TMPF
 
 	#local file?
-	LISTF="${HOME}/arq/docs/yahooFinanceSymbols/yahooFinanceSymbols.txt" 
+	LISTF="$HOME/arq/docs/yahooFinanceSymbols/yahooFinanceSymbols.txt" 
 
 	#temp file for download
 	TMPF='/tmp/yahooFinanceSymbols.txt'
 
 	#if there is no local copy, try to download it
-	if [[ ! -f "${LISTF}" ]]
+	if [[ ! -f "$LISTF" ]]
 	then
 		#check for downloaded temp file
-		if [[ ! -f "${TMPF}" ]]
+		if [[ ! -f "$TMPF" ]]
 		then
-			curl -L -o "${TMPF}" 'https://github.com/mountaineerbr/extra/raw/master/yahooFinanceSymbols/yahooFinanceSymbols.txt' || return 1
-			printf 'File at %s\n' "${TMPF}" >&2
+			curl -L -o "$TMPF" 'https://github.com/mountaineerbr/extra/raw/master/yahooFinanceSymbols/yahooFinanceSymbols.txt' || return 1
+			printf 'File at %s\n' "$TMPF" >&2
 		fi
 		
 		#set new path
-		LISTF="${TMPF}"
+		LISTF="$TMPF"
 	fi
 
 	#make table
-	column -et -s $'\t' -N'TICKER,NAME,EXCHANGE,CATEGORY,COUNTRY' -T'CATEGORY,NAME' "${LISTF}"
+	column -et -s $'\t' -N'TICKER,NAME,EXCHANGE,CATEGORY,COUNTRY' -T'CATEGORY,NAME' "$LISTF"
 }
 
 #nasdaq stock symbols
@@ -641,8 +645,8 @@ nlist()
 		while read line
 		do
 			#for line in nasdaqlisted.txt otherlisted.txt
-			printf 'Fetching %s\r' "${line}" >&2
-			curl --compressed "ftp://ftp.nasdaqtrader.com/symboldirectory/${line}"
+			printf 'Fetching %s\r' "$line" >&2
+			curl --compressed "ftp://ftp.nasdaqtrader.com/symboldirectory/$line"
 		done
 }
 #https://quant.stackexchange.com/questions/1640/where-to-download-list-of-all-common-stocks-traded-on-nyse-nasdaq-and-amex
@@ -673,9 +677,9 @@ rates()
 rate()
 {
 	#usage: rate [from_currency] [to_currency] [@date|?T|..]
-	if [[ -z ${2} ]] || [[ ${2} =~ [0-9]+ ]]
+	if [[ -z "$2" ]] || [[ "$2" =~ [0-9]+ ]]
 	then
-		set -- "${1}" usd "${2}"
+		set -- "$1" usd "$2"
 	elif [[ ${*} =~ (-h|:?help) ]]
 	then
 		curl -s 'rate.sx/:help'
@@ -697,8 +701,8 @@ loss()
 
 	#check for invalid notations
 	if [[ "$u" = *[a-zA-Z]* ]] ||
+		[[ "$u" != *[0-9]* ]] ||
 		[[ ! "${u/[,.-]*}" =~ ^.?.?$ ]]
-		#[[ "$u" = -* ]]
 	then
 		echo error >&2
 		return 1 
@@ -707,7 +711,7 @@ loss()
 	printf 'loss: %.4f %%\n' "$u"
 
 	#use zshell maths or bash bc?
-	if [[ -n "$ZSH_VERSION" ]]
+	if ((ZSH_VERSION))
 	then
 		float u rr
 		q=$(( u / 100 ))
