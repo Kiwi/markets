@@ -57,9 +57,9 @@ tesouro()
 	jq '.response.TrsrBondMkt' <<<"$data"
 
 	jq -r '.response.TrsrBdTradgList[].TrsrBd |
-		"\(.nm)\t\(.FinIndxs| if .nm == "PREFIXADO" then "" else .nm end)+\(if .anulInvstmtRate == 0 then empty else .anulInvstmtRate end)\t\(.minInvstmtAmt)\t\(.untrInvstmtVal)\t\(.mtrtyDt|.[:10])"' <<<"$data" |
+		"\(.nm)\t\(.FinIndxs| if .nm == "PREFIXADO" then "" else .nm end)+\(if .anulInvstmtRate == 0 then empty else .anulInvstmtRate end)%\t\(.minInvstmtAmt)\t\(.untrInvstmtVal)\t\(.mtrtyDt|.[:10])"' <<<"$data" |
 		sort |
-		column -s$'\t' -NTÍTULO,RENT/ANO,INVEST/MIN,PREÇO,VENCIMENTO -et
+		column -s$'\t' -et -NTÍTULO,RENT/ANO,INVEST/MIN,PREÇO,VENCIMENTO -RRENT/ANO,INVEST/MIN,PREÇO
 
 	echo "<https://www.tesourodireto.com.br/titulos/precos-e-taxas.htm>"
 
