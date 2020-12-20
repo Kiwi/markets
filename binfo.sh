@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.8.32  dec/2020  by mountaineerbr
+# v0.8.33  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -29,7 +29,7 @@ SYNOPSIS
 	$ binfo.sh  HASH
 	$ binfo.sh  [-aass] ADDR_HASH 
 	$ binfo.sh  [-b [-x] [BLK_HASH | ID]]  [-n BLK_HEIGHT] 
-	$ binfo.sh  -tt [ [-x] TX_HASH | ID]
+	$ binfo.sh  -tt [[-x] TX_HASH | ID]
 	$ binfo.sh  [-ehiilruv]
 
 
@@ -245,7 +245,7 @@ OPTIONS
       -x 	Get hex (of a block or transaction), use with
       		options '-b' or '-t'; blockchain.info api only.
     Blockhain
-      -i | -ii 	Bitcoin blockchain info (24H rolling ticker).
+      -i, -ii 	Bitcoin blockchain info (24H rolling ticker).
     Block
       -b 	Block information by hash or ID, if empty 
       		fetches latest block.
