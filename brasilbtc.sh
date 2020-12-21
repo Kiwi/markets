@@ -1,6 +1,6 @@
 #!/bin/bash
 # Brasilbtc.sh -- Puxa Taxas de Bitcoin de Exchanges do Brasil
-# v0.6.8  jun/2020  by mountaineerbr
+# v0.6.9  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -74,7 +74,8 @@ IMPORTANTE
 	Cuidado com agências de câmbio golpistas! Faça seus estudos! Não reco-
 	mendamos nenhuma em particular. São suspeitas no momento e de meu co-
 	nhecimento: 3xBit, AltasQuantum, HitBtc, NanuExchange, NegocieCoins, 
-	NoxBitcoin e TemBTC.
+	NoxBitcoin Nanu Exchange e TemBTC. Provavelmente muitas outras
+	também.
 
 	Nas estatísticas do <coingecko.com>, somente as agências 3xBit,
 	Brasiliex, NanuExchange, Mercado Bitcoin e Novadax estão listadas.
@@ -101,12 +102,19 @@ OPÇÕES
 
 		-v 	Mostra versão deste programa."
 
+#test if $RATE is non-zero
+testratef()
+{
+	((${RATE//[0.]}>0)) &&
+		[[ "$RATE" != null ]]
+}
+
 apiratesf() {
 	# Exchanges e Valores
 
 	## 3xBIT
 	#RATE="$("${YOURAPP[@]}" "https://api.exchange.3xbit.com.br/ticker/" | jq -r ".BRL_${1^^}.ask")"
-	#((${RATE//[0.]}>0)) && printf "%'.2f\t3xBIT\n" "${RATE}"
+	#testratef && printf "%'.2f\t3xBIT\n" "${RATE}"
 	#https://github.com/3xbit/docs/blob/master/exchange/public-rest-api-en_us.md
 	
 	## AtlasQuantum -- api returns Forbidden message
@@ -114,62 +122,72 @@ apiratesf() {
 	#https://atlasquantum.com/
 	
 	## BitBlue
-	{ [[ "${1^^}" = BTC ]] || [[ "${1^^}" = ETH ]] || [[ "${1^^}" = DASH ]];} &&
+	[[ "${1^^}" =~ ^(BTC|ETH|DASH)$ ]] && {
 		RATE="$("${YOURAPP[@]}" "https://bitblue.com/api/transactions?market=${1,,}&currency=brl" | jq -r '.[].data[0].price')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tBitBlue\n" "${RATE}"
+		testratef && printf "%'.2f\tBitBlue\n" "$RATE"
+	}
 	#https://bitblue.com/api-docs.php
 	unset RATE
 
 	## BitCambio
-	[[ "${1^^}" = BTC ]] && printf "%'.2f\tBitCambio\n" "$("${YOURAPP[@]}" "https://bitcambio_api.blinktrade.com/api/v1/BRL/ticker" | jq -r '.last')"
+	[[ "${1^^}" = BTC ]] && {
+		RATE="$("${YOURAPP[@]}" "https://bitcambio_api.blinktrade.com/api/v1/BRL/ticker" | jq -r '.last')"
+		testratef && printf "%'.2f\tBitCambio\n" "$RATE"
+	}
 	#https://bitcambiohelp.zendesk.com/hc/pt-br/articles/360006575172-Documenta%C3%A7%C3%A3o-para-API
 	#https://blinktrade.com/docs/?shell#ticker
 	unset RATE
 	
 	## BitcoinToYou -- litecoin does not work anymore
 	#[[ "${1,,}" = "ltc" ]] && BTYN="_litecoin"
-	if [[ "${1,,}" = "btc" ]]; then
-		RATE="$("${YOURAPP[@]}" "https://api_v1.bitcointoyou.com/ticker${BTYN}.aspx" | jq -r '((.buy|tonumber)+(.sell|tonumber))/2')"
-		((${RATE//[0.]}>0)) && printf "%'.2f\tBitcoinToYou\n" "${RATE}"
-	fi
+	#if [[ "${1,,}" = "btc" ]]; then
+	#	RATE="$("${YOURAPP[@]}" "https://api_v1.bitcointoyou.com/ticker${BTYN}.aspx" | jq -r '((.buy|tonumber)+(.sell|tonumber))/2')"
+	#	testratef && printf "%'.2f\tBitcoinToYou\n" "${RATE}"
+	#fi
 	#https://www.bitcointoyou.com/blog/api-b2u/
-	unset RATE
+	#unset RATE
 	
 	## BitcoinTrade
 	RATE="$("${YOURAPP[@]}" "https://api.bitcointrade.com.br/v2/public/BRL${1^^}/ticker" | jq -r '.data.last')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tBitcoinTrade\n" "${RATE}"
+	testratef && printf "%'.2f\tBitcoinTrade\n" "${RATE}"
 	#https://apidocs.bitcointrade.com.br/?version=latest#e3302798-a406-4150-8061-e774b2e5eed5
 	unset RATE
 	
-	## BitPreço
+	#bit nuvem
+	[[ "${1^^}" = BTC ]] && {
+		RATE="$("${YOURAPP[@]}" "https://bitnuvem.com/api/BTC/ticker" | jq -r '.ticker.last')"
+		testratef && printf "%'.2f\tBitNuvem\n" "$RATE"
+	}
+	#https://bitnuvem.com/api
+	unset RATE
+
+	## bitPreço
 	RATE="$("${YOURAPP[@]}" "https://api.bitpreco.com/${1,,}-brl/ticker" | jq -r '.last')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tBitPreço\n" "${RATE}"
+	testratef && printf "%'.2f\tBitPreço\n" "${RATE}"
 	#https://bitpreco.com/api.html
 	unset RATE
 
 	#BitRecife
-	if jq -er '.result[].MarketName' <<< "$("${YOURAPP[@]}" "https://exchange.bitrecife.com.br/api/v3/public/getmarkets")" | grep -iq "${1}_BRL"; then
-		RATE="$("${YOURAPP[@]}" "https://exchange.bitrecife.com.br/api/v3/public/getticker?market=${1^^}_BRL" | jq -r '.result[].Last')"
-		printf "%'.2f\tBitRecife\n" "${RATE}"
-	fi
+	RATE="$("${YOURAPP[@]}" "https://exchange.bitrecife.com.br/api/v3/public/getticker?market=${1^^}_BRL" | jq -r '.result[].Last')"
+	testratef && printf "%'.2f\tBitRecife\n" "${RATE}"
 	#https://app.swaggerhub.com/apis-docs/bleu/white-label/3.0.0#/Public%20functions/getMarkets
 	unset RATE
 
 	## BrasilBitcoin
 	RATE="$("${YOURAPP[@]}" "https://brasilbitcoin.com.br/API/prices/${1^^}" | jq -r '.last')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tBrasilBitcoin\n" "${RATE}"
+	testratef && printf "%'.2f\tBrasilBitcoin\n" "${RATE}"
 	#
 	unset RATE
 	
 	## Braziliex
 	RATE="$("${YOURAPP[@]}" "https://braziliex.com/api/v1/public/ticker/${1,,}_brl" | jq -r '.last')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tBraziliex\n" "${RATE}"
+	testratef && printf "%'.2f\tBraziliex\n" "${RATE}"
 	#https://braziliex.com/exchange/api.php
 	unset RATE
 
 	## Citicoin
 	RATE="$("${YOURAPP[@]}" "https://api.citcoin.com.br/v1/${1,,}/ticker/" | jq -r '.close')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tCitiCoin\n" "${RATE}"
+	testratef && printf "%'.2f\tCitiCoin\n" "${RATE}"
 	#https://www.citcoin.com.br/api/
 	unset RATE
 
@@ -181,18 +199,26 @@ apiratesf() {
 		XRP ) CN=6;;
 	esac
 	# Get rate functions
-	coinnextf() { 
-		if [[ "${YOURAPP}" =~ "curl" ]]; then
-			curl -s -X POST -d '{"OMSId": 1, "InstrumentId": '"${CN}"', "Depth": 1}' 'https://api.coinext.com.br:8443/AP/GetL2Snapshot'
+	RATE="$(
+		post='{"OMSId": 1, "InstrumentId": '"${CN}"', "Depth": 1}'
+		url='https://api.coinext.com.br:8443/AP/GetL2Snapshot'
+		if [[ "$YOURAPP" =~ curl ]]; then
+			curl -s -X POST -d "$post" "$url"
 		else
-			wget -qO- --post-data='{"OMSId": 1, "InstrumentId": '"${CN}"', "Depth": 1}' 'https://api.coinext.com.br:8443/AP/GetL2Snapshot'
-		fi
-	}
-	RATE="$(coinnextf | jq '.[0]|.[4]')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tCoinNext\n" "${RATE}"
+			wget -qO- --post-data="$post" "$url"
+		fi |
+			jq '.[0]|.[4]'
+	)"
+	testratef && printf "%'.2f\tCoinNext\n" "${RATE}"
 	#https://coinext.com.br/api.html
-	unset RATE
+	unset CN RATE
 	
+	#coin trader cx
+	RATE="$("${YOURAPP[@]}" "https://api.cointradecx.com/public/ticker?market=${1^^}_BRL" | jq -r '.result[].last')"
+	testratef && printf "%'.2f\tCoinTraderCX\n" "$RATE"
+	#https://docs.cointradecx.com/
+	unset RATE
+
 	## FlowBTC -- ONLY WEBSOCKET SEEMS TO BE WORKING! jan/2020
 	#RATE="$("${YOURAPP[@]}" "https://publicapi.flowbtc.com.br/v1/ticker/${1^^}BRL" | jq -r '.data.LastTradedPx')"
 	#[[ -n "${RATE}" ]] && [[ "${RATE}" != "0" ]] &&
@@ -202,13 +228,13 @@ apiratesf() {
 	
 	## Foxbit
 	RATE="$("${YOURAPP[@]}" "https://watcher.foxbit.com.br/api/Ticker/" | jq -r '.[]|"\(.createdDate) \(.currency) \(.sellPrice)"' | sort -rn | grep -im1 "BRLX${1^^}" | cut -d' ' -f3)"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tFoxBit\n" "${RATE}"
+	testratef && printf "%'.2f\tFoxBit\n" "${RATE}"
 	#https://foxbit.com.br/grafico-bitcoin/
 	unset RATE
 	
 	## MercadoBitcoin
 	RATE="$("${YOURAPP[@]}" "https://www.mercadobitcoin.net/api/${1^^}/ticker/" | jq -r '.ticker.last')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tMercadoBitcoin\n" "${RATE}"
+	testratef && printf "%'.2f\tMercadoBitcoin\n" "${RATE}"
 	#https://www.mercadobitcoin.com.br/api-doc/
 	unset RATE
 	
@@ -217,50 +243,62 @@ apiratesf() {
 	#https://www.negociecoins.com.br/documentacao-api
 
 	#Nanu Exchange
-	if RATE="$("${YOURAPP[@]}" "https://nanu.exchange/public?command=returnTicker&currencyPair=BRL_BTC" | jq -er 'select(.currencyPair == "BRL_'${1^^}'")|.last')"; then
-		printf "%'.2f\tNanu\n" "${RATE}"
-	fi
+	#if RATE="$("${YOURAPP[@]}" "https://nanu.exchange/public?command=returnTicker&currencyPair=BRL_BTC" | jq -er 'select(.currencyPair == "BRL_'${1^^}'")|.last')"; then
+	#	printf "%'.2f\tNanu\n" "${RATE}"
+	#fi
 	#https://nanu.exchange/documentation
-	unset RATE
+	#unset RATE
 
 	## NovaDAX
 	RATE="$("${YOURAPP[@]}" "https://api.novadax.com/v1/market/ticker?symbol=${1^^}_BRL" | jq -r '.data.lastPrice')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tNovaDAX\n" "${RATE}"
+	testratef && printf "%'.2f\tNovaDAX\n" "${RATE}"
 	#https://doc.novadax.com/pt-BR/#get-latest-tickers-for-all-trading-pairs
 	unset RATE
 
 	## NoxBitcoin
-	[[ "${1^^}" = BTC ]] && 
-		printf "%'.2f\tNoxBitcoin\n" "$("${YOURAPP[@]}" 'https://charlie.noxbitcoin.com.br/public/api/v1/prices' | jq -r '.last_price')"
+	[[ "${1^^}" = BTC ]] && {
+		RATE="$("${YOURAPP[@]}" 'https://charlie.noxbitcoin.com.br/public/api/v1/prices' | jq -r '.last_price')"
+		testratef && printf "%'.2f\tNoxBitcoin\n" "$RATE"
+	}
 	#https://www.noxbitcoin.com.br/
 	unset RATE
 	
 	## TEMBTC --> Em processo judicial
 	#RATE="$("${YOURAPP[@]}" "https://broker.tembtc.com.br/api/v3/${1,,}brl/ticker" | jq -r '.buy')"
-	#((${RATE//[0.]}>0)) && printf "%'.2f\tTEMBTC\n" "${RATE}"
+	#testratef && printf "%'.2f\tTEMBTC\n" "${RATE}"
 	#https://www.tembtc.com.br/api
 	
 	## OmniTrade -- closed
 	#RATE="$("${YOURAPP[@]}" "https://omnitrade.io/api/v2/tickers/${1,,}brl" | jq -r '.ticker.last')"
-	#((${RATE//[0.]}>0)) && printf "%'.2f\tOmniTrade\n" "${RATE}"
+	#testratef && printf "%'.2f\tOmniTrade\n" "${RATE}"
 	#https://help.omnitrade.io/pt-BR/articles/1572451-apis-como-integrar-seu-sistema
 
 	## Pagcripto  ##POR ENQUANTO SÓ RETORNA VALOR DE BTC MESMO NA APIv2!!
-	if [[ "${1^^}" = BTC ]]; then
+	[[ "${1^^}" = BTC ]] && {
 		RATE="$("${YOURAPP[@]}" "https://api.pagcripto.com.br/v2/public/ticker/${1^^}BRL" | jq -r '.data.last')"
-		((${RATE//[0.]}>0)) && printf "%'.2f\tPagCripto\n" "${RATE}"
+		testratef && printf "%'.2f\tPagCripto\n" "${RATE}"
 	#https://docs.pagcripto.com.br/?version=latest
-	fi
+	}
 	unset RATE
 
-	## Profitfy
-	RATE="$("${YOURAPP[@]}" "https://profitfy.trade/api/v1/public/ticker/${1,,}/brl" | jq -r '.[].last')"
-	((${RATE//[0.]}>0)) && printf "%'.2f\tProfitfy\n" "${RATE}"
+	## Profitfy  #PASSOU A PEDIR CHAVE DE API 
+	#RATE="$("${YOURAPP[@]}" "https://profitfy.trade/api/v1/public/ticker/${1,,}/brl" | jq -r '.[].last')"
+	#testratef && printf "%'.2f\tProfitfy\n" "${RATE}"
 	#https://profitfy.trade/Home/Api
+	#unset RATE
+
+
+	#youbtrade
+	RATE="$("${YOURAPP[@]}" "https://youbtrade.com.br/datafeed/history?symbol=TICKER${1^^}%2FBRL&resolution=60&from=${unix}&to=${unix}" | jq -r '.l[-1]')"
+	testratef && printf "%'.2f\tYouBTrade\n" "${RATE}"
+	#https://youbtrade.com.br/market/pair/BTC-BRL
 	unset RATE
 
 	## Walltime
-	[[ "${1^^}" = BTC ]] && printf "%'.2f\tWalltime\n" "$("${YOURAPP[@]}" "https://s3.amazonaws.com/data-production-walltime-info/production/dynamic/walltime-info.json" | jq -r '(.BRL_XBT.last_inexact)')"
+	[[ "${1^^}" = BTC ]] && {
+		RATE="$("${YOURAPP[@]}" "https://s3.amazonaws.com/data-production-walltime-info/production/dynamic/walltime-info.json" | jq -r '(.BRL_XBT.last_inexact)')"
+		testratef && printf "%'.2f\tWalltime\n" "$RATE"
+	}
 	#https://walltime.info/api.html#orgaa3116b
 	unset RATE
 }
