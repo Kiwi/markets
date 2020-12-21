@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.23  dec/2020  by mountaineerbr
+# v0.13.24  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -15,7 +15,8 @@ SCLDEFAULTS=16
 
 #don't change these
 #set number format
-export LC_NUMERIC=C
+#export LC_NUMERIC=C
+export LC_NUMERIC=en_US.UTF-8
 
 #troy ounce to gram ratio
 TOZ=31.1034768

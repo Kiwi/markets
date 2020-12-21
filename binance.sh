@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.7  dec/2020  by mountaineerbr
+# v0.10.8  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -22,7 +22,8 @@ SCLDEFAULTS=16
 RSLEEP=2  #defaults=2 seconds
 
 #make sure locale is set correctly
-export LC_NUMERIC=C
+#export LC_NUMERIC=C
+export LC_NUMERIC=en_US.UTF-8
 
 HELP="NAME
 	$SN - Market data from Binance public APIs
