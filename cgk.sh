@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.22  dec/2020  by mountaineerbr
+# v0.13.23  dec/2020  by mountaineerbr
 
 #defaults
 
@@ -510,8 +510,8 @@ exf()
 ## Bank currency rate function
 bankf()
 {
-	unset BANK FMET TMET
-	export BANKFLOCK=1
+	unset BANK FMET TMET 
+	export BANKSKIP=1
 
 	#download currency lists
 	clistf
@@ -556,7 +556,7 @@ bankf()
 		BTCBANK=1
 	elif ! BTCBANK="$( mainf 1 "${2,,}" btc 2>/dev/null )"
 	then
-		BTCBANK="( 1 / $( mainf 1 bitcoin "${2,,}" ) )" || exit 1
+		BTCBANK="( 1 / $( mainf 1 bitcoin "${2,,}" ) )" || return 1
 	fi
 	
 	# Get rates to vs_currency anyways
@@ -565,7 +565,7 @@ bankf()
 		BTCTOCUR=1
 	elif ! BTCTOCUR="$( mainf 1 "${3,,}" btc 2>/dev/null )"
 	then
-		BTCTOCUR="( 1 / $( mainf 1 bitcoin "${3,,}" ) )" || exit 1
+		BTCTOCUR="( 1 / $( mainf 1 bitcoin "${3,,}" ) )" || return 1
 	fi
 
 	# Timestamp? No timestamp for this API
@@ -670,9 +670,11 @@ trapf()
 	#unset trap
 	trap \  EXIT INT TERM
 
+	[[ -e "$ERRSIG" ]] && RETSIG=1
+
 	[[ -d "$TMPD" ]] && rm -rf "$TMPD"
-	
-	exit 0
+
+	exit "${RETSIG:-0}"
 }
 
 #-t ticker simple backup func
@@ -879,7 +881,8 @@ clistf()
 	then
 		# Retrieve list from CGK
 		CGKTEMPLIST1="$TMPD/.cgklist1.json"
-		"${YOURAPP[@]}" "https://api.coingecko.com/api/v3/coins/list" | jq -r '[.[] | { key: .symbol, value: .id } ] | from_entries' >"$CGKTEMPLIST1"
+		"${YOURAPP[@]}" "https://api.coingecko.com/api/v3/coins/list" |
+		jq -r '[.[] | { key: .symbol, value: .id } ] | from_entries' >"$CGKTEMPLIST1"
 	fi
 }
 
@@ -891,7 +894,8 @@ tolistf()
 	then
 		# Retrieve list from CGK
 		CGKTEMPLIST2="$TMPD/cgklist2.json"
-		"${YOURAPP[@]}" "https://api.coingecko.com/api/v3/simple/supported_vs_currencies" | jq -r '.[]' >"$CGKTEMPLIST2"
+		"${YOURAPP[@]}" "https://api.coingecko.com/api/v3/simple/supported_vs_currencies" |
+		jq -r '.[]' >"$CGKTEMPLIST2"
 	fi
 }
 
@@ -913,10 +917,10 @@ changevscf()
 		[[ -n "${GREPID//null}" ]]
 	then
 		return 0
-	else
-		unset GREPID
-		return 1
 	fi
+	
+	unset GREPID
+	return 1
 }
 
 # Change currency code to ID in FROM_CURRENCY
@@ -937,10 +941,10 @@ changetocf()
 		[[ -n "${GREPID//null}" ]]
 	then
 		return 0
-	else
-		unset GREPID
-		return 1
 	fi
+
+	unset GREPID
+	return 1
 }
 
 # Precious metals in grams?
@@ -1002,15 +1006,16 @@ curcheckf()
 {
 	## Check VS_CURRENCY
 	# Make sure "XAG Silver" does not get translated to "XAG Xrpalike Gene"
-	if [[ -z "$BANKFLOCK$TOPT" ]] &&
-		[[ \ "${FIATCODES[*]}"\  = *\ "${2,,}"\ * ]]
-	then
-		#auto try the bank function
+	#auto try the bank function, if needed
+	if [[ -z "$BANKSKIP$TOPT" ]] &&
+		[[ \ "${FIATCODES[*]}"\  = *\ "${2,,}"\ * ]] &&
 		bankf "${@}"
-		exit
+	then
+		exit 0
 	elif clistf &&
 		! jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${2}$"
 	then
+		: >"$ERRSIG"
 		printf "ERR: currency -- %s\n" "${2^^}" >&2
 		exit 1
 	fi
@@ -1022,12 +1027,13 @@ curcheckf()
 	then
 		# Bank opt needs this anyways
 		#auto try the bank function
-		if [[ -z "$BANKFLOCK$TOPT" ]] &&
-			jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${3}$"
-		then
+		if [[ -z "$BANKSKIP$TOPT" ]] &&
+			jq -r '.[],keys[]' "$CGKTEMPLIST1" | grep -qi "^${3}$" &&
 			bankf "${@}"
-			exit
+		then
+			exit 0
 		else
+			: >"$ERRSIG"
 			printf "ERR: currency -- %s\n" "${3^^}" >&2
 			exit 1
 		fi
@@ -1042,12 +1048,6 @@ mainf()
 	local rate
 	unset GREPID
 
-	# Check if we can get from_currency ID
-	if changevscf "$2"
-	then
-		set -- "$1" "${GREPID}" "$3"
-	fi
-
 	#if $CGKRATERAW is set, it is from bank function
 	if [[ -f "${CGKRATERAW}" ]]
 	then
@@ -1058,6 +1058,7 @@ mainf()
 		then
 			echo "$rate"
 		else
+			((BANKSKIP)) || : >"$ERRSIG"
 			return 1
 		fi
 	else
@@ -1211,11 +1212,12 @@ else
 fi
 unset UAG
 
-#check for gzip, too?
-
 #make temp dir
-TMPD="$(mktemp -d /tmp/${SN:-cgk.sh}.$$.XXXXXXXX || mktemp -d )" || exit 1
+TMPD="$( mktemp -d )" || exit 1
 export TMPD
+
+#error filename for exit code
+ERRSIG="$TMPD/errsignal.txt"
 
 ## Trap temp cleaning functions
 trap trapf EXIT INT TERM
@@ -1266,8 +1268,11 @@ fi
 if (( BANK )) ||
 	[[ \ "${FIATCODES[*]}"\  = *\ "${2,,}"\ * ]]
 then
-	BANK=1
-	bankf "${@}"
+	bankf "${@}" || {
+		: >"$ERRSIG"
+		echo "ERR -- check currency codes" >&2
+		exit 1
+	}
 	exit
 fi
 
@@ -1275,7 +1280,7 @@ fi
 #get coin list
 clistf
 
-# Check if we can get from_currency ID
+# Check if we can get correct from and to_currency IDs/symbols
 changevscf "$2" && set -- "$1" "$GREPID" "$3"
 changetocf "$3" && set -- "$1" "$2" "$GREPID"
 unset GREPID
