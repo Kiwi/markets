@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bitstamp.sh  -- Websocket access to Bitstamp.com
-# v0.3.10  jan/2021  by mountainner_br
+# v0.3.11  jan/2021  by mountainner_br
 
 #defaults
 #market
@@ -36,7 +36,7 @@ WARRANTY
 	distributed without support or bug corrections.
 
 	This programme requires latest version of Bash, JQ, Websocat
-	and Lolcat.
+	or Wscat and Lolcat.
 
 	If you found this script useful, consider giving me a nickle!
 		=)
