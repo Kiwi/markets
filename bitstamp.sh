@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bitstamp.sh  -- Websocket access to Bitstamp.com
-# v0.3.11  jan/2021  by mountainner_br
+# v0.3.12  jan/2021  by mountainner_br
 
 #defaults
 #market
@@ -13,7 +13,7 @@ export LC_NUMERIC=C
 DECIMALDEF=2
 
 HELP="SYNOPSIS
-	bitstamp.sh [-c] [-fNUM] [-is] [-X] [MARKET]
+	bitstamp.sh [-cisX] [-fNUM] [MARKET]
 	bitstamp.sh [-hlv]
 
 
