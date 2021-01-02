@@ -166,7 +166,7 @@ shift $((OPTIND -1))
 #must have packages
 if ! command -v jq &>/dev/null
 then
-	printf "$SN: JQ is be required" >&2
+	printf "$SN: JQ is required" >&2
 	exit 1
 fi
 
@@ -177,7 +177,13 @@ elif command -v wget &>/dev/null
 then
 	YOURAPP=( wget -qO- )
 else
-	echo "$SN: curl or wget is be required" >&2
+	echo "$SN: curl or wget is required" >&2
+	exit 1
+fi
+
+if ((OPTL==0)) && ! command -v websocat &>/dev/null
+then
+	printf "$SN: Websocat is required" >&2
 	exit 1
 fi
 
