@@ -97,6 +97,7 @@ listf()
 	#list markets
 	"${YOURAPP[@]}" "$url" |
 		jq -r '.[]|"\(.name)\t\(.url_symbol)\t\(.base_decimals)\t\(.counter_decimals)\t\(.trading)\t\(.description)"' |
+		sort |
 		column -et -s$'\t' -NName,Symbol,BaseDec,CountDec,TradeStats,Description -TDescription
 }
 
