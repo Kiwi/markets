@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.8  dec/2020  by mountaineerbr
+# v0.10.9  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -33,7 +33,7 @@ SYNOPSIS
 	$SN [-NUM] [-jou] [AMOUNT] MARKET
 	$SN [-NUM] [-aciorstwz] [-ju] MARKET
 	$SN [-bbt] [-ju] MARKET
-	$SN [-hlv]
+	$SN [-hlvX]
 
 
 	Get the latest data from Binance markets from public APIs. This 
@@ -62,11 +62,12 @@ SYNOPSIS
 	Option -o sets thousands separator in printing results.
 
 	To keep trying to reconnect websocket automatically on error or
-	EOF, use option -a together with websocat options. Beware this
+	EOF, use option -a together with websocket options. Beware this
 	option may cause high CPU usage until reconnection is achieved!
 
 	Some functions use curl/wget to fetch data from REST APIs and
-	some use the websocat package to fetch data from websockets.
+	some use websocat (defaults) or wscat packages to fetch data from
+	websockets. Set -X if you prefer using wscat instead of websocat.
 
 	Option -r uses curl or wget to fetch data instead of opening
 	a websocket, defaults sleep time (seconds) between consecutive
@@ -91,8 +92,8 @@ WARRANTY
 	Licensed under the GNU Public License v3 or better and is
 	distributed without support or bug corrections.
    	
-	This script requires Bash, cURL or Wget, Gzip, JQ , Websocat,
-	Lolcat and GNU Coreutils to work properly.
+	This script requires Bash, cURL or Wget, Gzip, JQ , Websocat or
+	Wscat, Lolcat and GNU Coreutils to work properly.
 
 	If you found this useful, please consider sending me a nickle! 
 		=)
@@ -154,14 +155,15 @@ OPTIONS
 	-NUM 	   Decimal plate setting (scale).
 	-o 	   Add a thousands separator to printed results.
 	Miscellaneous
-	-a 	   Autoreconnect in case of temporary errors for websocat
+	-a 	   Autoreconnect in case of temporary errors for websocket
 		   connection; defaults=unset.
 	-d 	   Print raw data from API, for debugging.
 	-h 	   Show this help.
 	-j 	   Use <binance.je> server; defaults=<binance.com>.
-	-r 	   Use curl/wget instead of websocat with options -swi .
+	-r 	   Use curl/wget instead of websocket with options -swi .
 	-u 	   Use <binance.us> server; defaults=<binance.com>.
 	-v 	   Print script version.
+	-X 	   Use wscat instead of websocat package for websockets.
 	Functions
 	-b  [LEVELS] MARKET
 		   Order book depth; valid limits 5, 10 and 20; defaults=20.
@@ -534,7 +536,7 @@ lcoinsf() {
 
 
 #parse options
-while getopts 1234567890abcdofhjlistuwvrz opt
+while getopts 1234567890abcdofhjlistuwvrXz opt
 do
 	case $opt in
 		( [0-9] ) #scale setting
@@ -591,6 +593,9 @@ do
 			SOPT=1
 			COLORC=(lolcat -p 2000 -F 5)
 			;;
+		( X ) #prefer wscat instead of websoccat
+			XOPT=1
+			;;
 		( z ) #time in UTC and nanoseconds
 			export TZ=UTC
 			;;
@@ -618,18 +623,26 @@ else
 	exit 1
 fi
 
-if [[ -n "${IOPT}${SOPT}${BOPT}${TOPT}" ]] &&
-	[[ -z "${CURLOPT}" ]] &&
-	! command -v websocat &>/dev/null
-then
-	
-	echo "$SN: websocat is required" >&2
-	exit 1
-fi
-
-#set websocket
+#set websocket pkg
 #websocat command
-WEBSOCATC=( websocat -nt --ping-interval 20 -E --ping-timeout 42 ${AUTOR[0]} )
+if
+	[[ -n "${IOPT}${SOPT}${BOPT}${TOPT}" ]] &&
+	[[ -z "${CURLOPT}" ]]
+then
+
+	if ((XOPT==0)) && command -v websocat &>/dev/null
+	then
+		WEBSOCATC=( websocat -nt --ping-interval 20 -E --ping-timeout 42 ${AUTOR[0]} )
+
+	elif command -v wscat &>/dev/null
+	then
+		unset AUTOR
+		WEBSOCATC=( wscat -c )
+	else
+		echo "$SN: websocat or wscat is required" >&2
+		exit 1
+	fi
+fi
 
 #websocket address
 WSSADD="${AUTOR[1]}wss://stream.binance.${WHICHB}:9443/ws/"
