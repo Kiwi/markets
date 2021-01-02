@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.9  jan/2021  by mountaineerbr
+# v0.10.10  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -610,7 +610,7 @@ shift $((OPTIND -1))
 #must have packages
 if ! command -v jq &>/dev/null
 then
-	printf "$SN: JQ is required" >&2
+	echo "$SN: JQ is required" >&2
 	exit 1
 elif command -v curl &>/dev/null
 then

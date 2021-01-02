@@ -6,6 +6,9 @@
 #market
 MKTDEF=btcusd
 
+#script name
+SN="${0##*/}"
+
 #do not change the following
 export LC_NUMERIC=C
 DECIMALDEF=2
@@ -166,7 +169,7 @@ shift $((OPTIND -1))
 #must have packages
 if ! command -v jq &>/dev/null
 then
-	printf "$SN: JQ is required" >&2
+	echo "$SN: JQ is required" >&2
 	exit 1
 fi
 
@@ -183,7 +186,7 @@ fi
 
 if ((OPTL==0)) && ! command -v websocat &>/dev/null
 then
-	printf "$SN: Websocat is required" >&2
+	echo "$SN: Websocat is required" >&2
 	exit 1
 fi
 
