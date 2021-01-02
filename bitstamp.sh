@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bitstamp.sh  -- Websocket access to Bitstamp.com
-# v0.3.8  jan/2021  by mountainner_br
+# v0.3.9  jan/2021  by mountainner_br
 
 #defaults
 #market
@@ -81,7 +81,18 @@ colorf()
 #list mkts
 listf()
 {
-	"${YOURAPP[@]}" https://www.bitstamp.net/api/v2/trading-pairs-info/ |
+	local url
+	url=https://www.bitstamp.net/api/v2/trading-pairs-info/
+	
+	#just check a currency market?
+	if [[ "$1" = check ]]
+	then
+		grep -qiw "$2" <<<"$("${YOURAPP[@]}" "$url" | jq -r '.[].url_symbol')"
+		return
+	fi
+
+	#list markets
+	"${YOURAPP[@]}" "$url" |
 		jq -r '.[]|"\(.name)\t\(.url_symbol)\t\(.base_decimals)\t\(.counter_decimals)\t\(.trading)\t\(.description)"' |
 		column -et -s$'\t' -NName,Symbol,BaseDec,CountDec,TradeStats,Description -TDescription
 }
@@ -182,10 +193,9 @@ set -- "${@,,}"
 set -- $1$2
 
 ## Check for valid market pair
-if
-	! grep -qi "$1" <<<"$("${YOURAPP[@]}" "https://www.bitstamp.net/api/v2/trading-pairs-info/" | jq -r '.[].name' | tr -d / | tr A-Z a-z)"
+if ! listf check "$1"
 then
-	echo 'Usupported market/currency pair.' >&2
+	echo "Usupported market -- ${1,,}" >&2
 	echo 'Run with -l to list available markets.' >&2
 	exit 1
 fi
