@@ -1,6 +1,6 @@
 #!/bin/bash
 # Uol.sh -- Puxa cotações do portal do UOL
-# v0.2.23  dec/2020  by mountaineer_br
+# v0.2.24  jsn/2021  by mountaineer_br
 
 #defaults
 #column separator for the -a opt
@@ -366,7 +366,7 @@ lstocksf() {
 			lynx -force_html -dump -nolist -stdin
 		elif command -v elinks &>/dev/null
 		then
-			elinks -force-html -dump
+			elinks -force-html -dump -no-references
 		else
 			sed 's/<[^>]*>//g'
 			echo 'não foi possível usar um navegador de linha de comando para processar html' >&2
@@ -383,7 +383,7 @@ lstocksf() {
 # Cotação dos metais
 metf() {
 	#get data
-	COT="$(${YOURAPP} "https://economia.uol.com.br/cotacoes/" | hf)"
+	COT="$(${YOURAPP} "https://economia.uol.com.br/cotacoes/")"
 	
 	#Debug?
 	if [[ -n "${PJSON}" ]]; then
@@ -393,9 +393,11 @@ metf() {
 
 	printf "UOL - Metais Preciosos\n"
 	
-	grep -Eo --color=never 'Ouro.{117}' <<<"${COT}" | 
+	hf <<<"${COT}" |
+		grep -Eo 'Ouro.{117}' |
 		grep -e 'US$' -e '%' |
 		sed -e 's/[0-9]\s/&\n/g' -e 's/^\s\s*//' -e 's/US\$//g' |
+		grep -Evi '(desce|sobre|d.lar|bolsa|melhor|pior|setor|tem|p.blico|privado|V)' |
 		column -et -N'METAL,VAR,VENDA(US$/OZ)'
 	
 	grep -o "Câmbio\s*Atualizado em..............." <<<"${COT}" |
