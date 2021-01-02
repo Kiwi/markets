@@ -1,6 +1,6 @@
 #!/bin/bash
 # Bitstamp.sh  -- Websocket access to Bitstamp.com
-# v0.3.9  jan/2021  by mountainner_br
+# v0.3.10  jan/2021  by mountainner_br
 
 #defaults
 #market
@@ -8,13 +8,12 @@ MKTDEF=btcusd
 
 #script name
 SN="${0##*/}"
-
 #do not change the following
 export LC_NUMERIC=C
 DECIMALDEF=2
 
 HELP="SYNOPSIS
-	bitstamp.sh [-c] [-fNUM] [-is] [MARKET]
+	bitstamp.sh [-c] [-fNUM] [-is] [-X] [MARKET]
 	bitstamp.sh [-hlv]
 
 
@@ -53,7 +52,8 @@ OPTIONS
 	-l 	 	List available markets.
 	-s [MARKET] 	Live trade stream (default opt).
 	-c		Coloured prices; only with options -si .
-	-v 		Show this programme version."
+	-v 		Show this programme version.
+	-X 		Use wscat instead of websocat for websockets."
 #https://www.bitstamp.net/websocket/v2/
 
 #trap INT signal
@@ -103,7 +103,11 @@ listf()
 
 ## Trade stream - Bitstamp Websocket for Price Rolling
 streamf() {
-	local N tick
+	local N tick url query
+
+	#websocket url
+ 	url=ws.bitstamp.net
+	query="{ \"event\": \"bts:subscribe\",\"data\": { \"channel\": \"live_trades_${1,,}\" } }"
 
 	if ((ISTREAMOPT))
 	then
@@ -117,8 +121,16 @@ streamf() {
 
 	while true
 	do
-		echo "{ \"event\": \"bts:subscribe\",\"data\": { \"channel\": \"live_trades_${1,,}\" } }" |
-			websocat -nt --ping-interval 20 "wss://ws.bitstamp.net" |
+		if ((OPTX==0)) && command -v websocat &>/dev/null
+		then
+			websocat -nt --ping-interval 20 "wss://$url" <<<"$query"
+		elif command -v wscat &>/dev/null
+		then
+			wscat -w 1000000 -c "wss://$url" -x "$query"
+		else
+			echo "$SN: websocat or wscat is required" >&2
+			exit 1
+		fi |
 			jq --unbuffered -r "$tick"  |
 			printpricef | colorf
 
@@ -129,7 +141,7 @@ streamf() {
 }
 
 # Parse options
-while getopts :1234567890cf:lhsiv opt
+while getopts :1234567890cf:lhsivX opt
 do
   case $opt in
 
@@ -159,6 +171,9 @@ do
 		grep -m1 '# v' "$0"
 		exit
 		;;
+	X ) #prefer wscat instead of websoccat
+		OPTX=1
+		;;
 	\? )
 		echo "Invalid Option: -$OPTARG" 1>&2
 		exit 1
@@ -182,12 +197,6 @@ then
 	YOURAPP=( wget -qO- )
 else
 	echo "$SN: curl or wget is required" >&2
-	exit 1
-fi
-
-if ((OPTL==0)) && ! command -v websocat &>/dev/null
-then
-	echo "$SN: Websocat is required" >&2
 	exit 1
 fi
 
