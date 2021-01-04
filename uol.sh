@@ -1,6 +1,6 @@
 #!/bin/bash
 # Uol.sh -- Puxa cotações do portal do UOL
-# v0.2.24  jsn/2021  by mountaineer_br
+# v0.2.25  jan/2021  by mountaineer_br
 
 #defaults
 #column separator for the -a opt
@@ -57,6 +57,7 @@ TICKER RESUMIDO
 	argumentos para o programa:
 
 		$ uol.sh PETR4.SA
+
 
 	Se não funcionar, será necessário que se utilize o número de
 	ID do ativo para este fim. Para pegar o número de ID de uma
