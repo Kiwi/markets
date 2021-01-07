@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# v0.1.19  aug/2020  by castaway
+# v0.1.20  jan/2021  by castaway
 
 #make sure locale is set correctly
 export LC_NUMERIC=C
