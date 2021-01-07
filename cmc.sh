@@ -1,6 +1,6 @@
 #!/bin/bash
 # cmc.sh -- coinmarketcap.com api access
-# v0.11.9  jan/2021  by mountaineerbr
+# v0.11.10  jan/2021  by mountaineerbr
 
 #your cmc api key
 #CMCAPIKEY=
@@ -216,7 +216,7 @@ errf() {
 
 #-b bank currency rate function
 bankf() {
-	BANK=1
+	unset BANK
 
 	#rerun script, get rates and process data
 	if [[ "${2^^}" = BTC ]]
@@ -513,11 +513,8 @@ satoshif()
 #defaults func -- currency converter
 mainf()
 {
-	export CMCJSON="$TMPD/cmc.json"
-	if [[ ! -e "$CMCJSON" ]] || ((BANK))
-	then
-		curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json' -d "&symbol=${2^^}&convert=${3^^}" -G 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest' -o "$CMCJSON"
-	fi
+	CMCJSON="$TMPD/cmc_${RANDOM}.json"
+	curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json' -d "&symbol=${2^^}&convert=${3^^}" -G 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest' -o "$CMCJSON"
 	
 	#print json?
 	if (( PJSON ))
