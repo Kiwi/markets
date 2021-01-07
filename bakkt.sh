@@ -38,6 +38,51 @@ OPTIONS
 		with argument 1-3; defaults=3.
 	-v 	Print this script version."
 
+
+# Contracts func
+contractsf()
+{
+	CONTRACTURL='https://www.theice.com/marketdata/DelayedMarkets.shtml?getContractsAsJson=&productId=23808&hubId=26066' 
+	DATA0="$(${YOURAPP} "${CONTRACTURL}")"
+
+	# Print JSON?
+	if [[ -n ${PJSON} ]]; then
+		printf "%s\n" "${DATA0}"
+		exit
+	fi
+
+	printf "Bakkt Contract List\n"
+	jq -r 'reverse[]|"",
+		"Market_ID: \(.marketId // empty)",
+		"Strip____: \(.marketStrip // empty)",
+		"Last_time: \(.lastTime // empty)",
+		"End_date_: \(.endDate // empty)",
+		"LastPrice: \(.lastPrice // empty)",
+		"Change(%): \(.change // empty)",
+		"Volume___: \(.volume // empty)"' <<< "${DATA0}"
+}
+
+#time series func
+timeseriesf()
+{
+	[[ "$1" != [0-4] ]] && set -- 3 && echo 'set to default opt 3' 1>&2
+
+	#time series Contracts opt -- Default option
+	CONTRACTURL="https://www.theice.com/marketdata/DelayedMarkets.shtml?getHistoricalChartDataAsJson=&marketId=6137574&historicalSpan=$1"
+	DATA0="$(${YOURAPP} "${CONTRACTURL}")"
+	# Print JSON?
+	if [[ -n ${PJSON} ]]; then
+		printf "%s\n" "${DATA0}"
+		exit
+	fi
+
+	list="$( jq -r '.bars[]|reverse|@tsv' <<< "${DATA0}" )"
+	echo "Bakkt Contract List"
+	echo "$list"
+	echo "Entries: $(wc -l <<<"$list")"
+}
+
+
 # Parse options
 while getopts :jhtv opt
 do
@@ -87,42 +132,12 @@ if ! command -v gzip &>/dev/null; then
 fi
 
 
-if [[ -n "$tsopt" ]]; then
-	[[ "$1" != [0-4] ]] && set -- 3 && echo 'set to default opt 3' 1>&2
-
-	#time series Contracts opt -- Default option
-	CONTRACTURL="https://www.theice.com/marketdata/DelayedMarkets.shtml?getHistoricalChartDataAsJson=&marketId=6137574&historicalSpan=$1"
-	DATA0="$(${YOURAPP} "${CONTRACTURL}")"
-	# Print JSON?
-	if [[ -n ${PJSON} ]]; then
-		printf "%s\n" "${DATA0}"
-		exit
-	fi
-
-	printf "Bakkt Contract List\n"
-	jq -r '.bars[]|reverse|@tsv' <<< "${DATA0}" |
-		tee >( printf '%s ' Entries: ;wc -l )
-	exit
+if [[ -n "$tsopt" ]]
+then
+	#time series func
+	timeseriesf "$@"
+else
+	# Contracts opt -- Default option
+	contractsf "$@"
 fi
-
-
-# Contracts opt -- Default option
-CONTRACTURL='https://www.theice.com/marketdata/DelayedMarkets.shtml?getContractsAsJson=&productId=23808&hubId=26066' 
-DATA0="$(${YOURAPP} "${CONTRACTURL}")"
-
-# Print JSON?
-if [[ -n ${PJSON} ]]; then
-	printf "%s\n" "${DATA0}"
-	exit
-fi
-
-printf "Bakkt Contract List\n"
-jq -r 'reverse[]|"",
-	"Market_ID: \(.marketId // empty)",
-	"Strip____: \(.marketStrip // empty)",
-	"Last_time: \(.lastTime // empty)",
-	"End_date_: \(.endDate // empty)",
-	"LastPrice: \(.lastPrice // empty)",
-	"Change(%): \(.change // empty)",
-	"Volume___: \(.volume // empty)"' <<< "${DATA0}"
 
