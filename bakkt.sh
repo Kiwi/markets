@@ -1,6 +1,5 @@
 #!/bin/bash
-#
-# v0.1.20  jan/2021  by castaway
+# v0.1.21  jan/2021  by castaway
 
 #make sure locale is set correctly
 export LC_NUMERIC=C
@@ -43,7 +42,7 @@ OPTIONS
 contractsf()
 {
 	CONTRACTURL='https://www.theice.com/marketdata/DelayedMarkets.shtml?getContractsAsJson=&productId=23808&hubId=26066' 
-	DATA0="$(${YOURAPP} "${CONTRACTURL}")"
+	DATA0="$("${YOURAPP[@]}" "${CONTRACTURL}")"
 
 	# Print JSON?
 	if [[ -n ${PJSON} ]]; then
@@ -69,7 +68,7 @@ timeseriesf()
 
 	#time series Contracts opt -- Default option
 	CONTRACTURL="https://www.theice.com/marketdata/DelayedMarkets.shtml?getHistoricalChartDataAsJson=&marketId=6137574&historicalSpan=$1"
-	DATA0="$(${YOURAPP} "${CONTRACTURL}")"
+	DATA0="$("${YOURAPP[@]}" "${CONTRACTURL}")"
 	# Print JSON?
 	if [[ -n ${PJSON} ]]; then
 		printf "%s\n" "${DATA0}"
@@ -118,19 +117,13 @@ fi
 
 # Test if cURL or Wget is available
 if command -v curl &>/dev/null; then
-	YOURAPP="curl -sL --compressed"
+	YOURAPP=(curl -sL --compressed)
 elif command -v wget &>/dev/null; then
-	YOURAPP="wget -qO-"
+	YOURAPP=(wget -qO-)
 else
 	printf "Package cURL or Wget is needed.\n" 1>&2
 	exit 1
 fi
-
-#request compressed response
-if ! command -v gzip &>/dev/null; then
-	printf 'warning: gzip may be required\n' 1>&2
-fi
-
 
 if [[ -n "$tsopt" ]]
 then
