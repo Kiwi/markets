@@ -1,6 +1,6 @@
 #!/bin/bash
 # cmc.sh -- coinmarketcap.com api access
-# v0.11.8  jan/2021  by mountaineerbr
+# v0.11.9  jan/2021  by mountaineerbr
 
 #your cmc api key
 #CMCAPIKEY=
@@ -643,7 +643,7 @@ fi
 
 #make temo dir, lots of data
 trap cleanf INT HUP EXIT
-TMPD="$(mktemp -d)"
+TMPD="$(mktemp -d)" || exit 1
 
 #call opt functions
 if (( MCAP ))
