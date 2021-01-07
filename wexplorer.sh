@@ -10,7 +10,7 @@ options:
 	a - all transactions from an address
 	w - all addresses from a wallet
 	t - check a transaction
-w3m and gunzip are required.
+w3m and gunzip are required
 <https://www.walletexplorer.com>"
 
 sedwidf()
@@ -23,9 +23,13 @@ widf()
 	w3m -dump_source "https://www.walletexplorer.com/?q=$1" | gunzip -c | sedwidf
 }
 
-
+#help page
+if [[ "$1" = help ]] || [[ "$1" = -h* ]]
+then
+	echo "$HELP"
+	exit 0
 #more than 2 arguments required
-if [[ -z "$2" ]]
+elif [[ -z "$2" ]]
 then
 	echo "$HELP"
 	echo "more arguments required" >&2
@@ -39,11 +43,6 @@ fi
 #select options
 #set option url
 case "$1" in
-	#help page
-	help | -h )
-		echo "$HELP"
-		exit 0
-		;;
 	#transactions from an address
 	address | addr | a)
 		if (( ${#2} > 30 ))
