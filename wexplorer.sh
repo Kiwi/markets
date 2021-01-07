@@ -1,13 +1,17 @@
 #!/bin/zsh
 #walletexplorer.com wrapper
-#usage: wexplorer a [address|walletid] [csv]
-#usage: wexplorer w [address|walletid]
-#usage: wexplorer t txid
-#a - all transactions from an address
-#w - all addresses from a wallet
-#t - check a transaction
-#requires w3m and gunzip
-#https://www.walletexplorer.com
+# v0.2  by mountaineerbr
+
+HELP="walletexplorer.com wrapper
+usage: wexplorer a [address|walletid] [csv]
+usage: wexplorer w [address|walletid]
+usage: wexplorer t txid
+options:
+	a - all transactions from an address
+	w - all addresses from a wallet
+	t - check a transaction
+w3m and gunzip are required.
+<https://www.walletexplorer.com>"
 
 sedwidf()
 {
@@ -23,6 +27,7 @@ widf()
 #more than 2 arguments required
 if [[ -z "$2" ]]
 then
+	echo "$HELP"
 	echo "more arguments required" >&2
 	exit 1
 #is requesting csv with the right option?
@@ -31,7 +36,14 @@ then
 	comp2='?format=csv'
 fi
 
+#select options
+#set option url
 case "$1" in
+	#help page
+	help | -h )
+		echo "$HELP"
+		exit 0
+		;;
 	#transactions from an address
 	address | addr | a)
 		if (( ${#2} > 30 ))
