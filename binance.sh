@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.10  jan/2021  by mountaineerbr
+# v0.10.11  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -408,11 +408,14 @@ bookdf() {
 #-bb order book total sizes
 booktf() {
 	#check if user set limit
-	if (( $1 == 1 )) || (( ${1} > 10000 ))
+	if
+		deflimit=10000
+		valid='5|10|20|50|100|500|1000|5000|10000'
+		[[ ! "$1" =~ ($valid) ]]
 	then
-		set -- 10000 "${2}" "${3}"
-		(( ${1} - 1 )) || echo -e "$SN: warning -- invalid level limit\n\n" >&2
-		sleep 1
+		set -- $deflimit "${2}" "${3}"
+		echo "$SN: valid limits -- ${valid//|/ }" >&2
+		echo "$SN: warning -- limit level set to $deflimit" >&2
 	fi
 
 	#set addr
