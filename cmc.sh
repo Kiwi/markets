@@ -1,6 +1,6 @@
 #!/bin/bash
 # cmc.sh -- coinmarketcap.com api access
-# v0.11.7  jan/2021  by mountaineerbr
+# v0.11.8  jan/2021  by mountaineerbr
 
 #your cmc api key
 #CMCAPIKEY=
@@ -514,8 +514,10 @@ satoshif()
 mainf()
 {
 	export CMCJSON="$TMPD/cmc.json"
-	[[ -e "$CMCJSON" ]] && ((BANK==0)) ||
+	if [[ ! -e "$CMCJSON" ]] || ((BANK))
+	then
 		curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json' -d "&symbol=${2^^}&convert=${3^^}" -G 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest' -o "$CMCJSON"
+	fi
 	
 	#print json?
 	if (( PJSON ))
