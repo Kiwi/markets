@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.8.33  dec/2020  by mountaineerbr
+# v0.8.34  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -262,7 +262,7 @@ OPTIONS
       -p 	List unspent tx outputs from addresses; for multiple addresses:
       		base58 or xpub; response limit=1000 txs.
     Transaction
-      -t | -tt	Transaction information by hash or ID."
+      -t, -tt	Transaction information by hash or ID."
 
 #functions
 
