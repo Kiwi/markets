@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.12  jan/2021  by mountaineerbr
+# v0.10.13  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -437,7 +437,12 @@ booktf() {
 	
 	#process data
 	#bid levels and total size
-	BIDS=($(jq -r '.bids[]|.[1]' <<<"${BOOK}")) 
+	if ! BIDS=($(jq -r '.bids[]|.[1]' <<<"${BOOK}"))
+	then
+		#if there was error, check if there is a message
+		jq -r .msg//empty <<<"$BOOK"
+		exit 1
+	fi
 	BIDSL="${#BIDS[@]}"
 	BIDST="$(bc <<<"${BIDS[*]/%/+}0")"
 	BIDSQUOTE=($(jq -r '.bids[]|((.[0]|tonumber)*(.[1]|tonumber))' <<<"${BOOK}")) 
