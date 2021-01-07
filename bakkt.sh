@@ -1,5 +1,5 @@
 #!/bin/bash
-# v0.1.21  jan/2021  by castaway
+# v0.1.22  jan/2021  by castaway
 
 #make sure locale is set correctly
 export LC_NUMERIC=C
@@ -124,6 +124,9 @@ else
 	printf "Package cURL or Wget is needed.\n" 1>&2
 	exit 1
 fi
+
+#request compressed response
+#gzip may be required
 
 if [[ -n "$tsopt" ]]
 then
