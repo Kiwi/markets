@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.11  jan/2021  by mountaineerbr
+# v0.10.12  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -411,7 +411,7 @@ booktf() {
 	if
 		deflimit=10000
 		valid='5|10|20|50|100|500|1000|5000|10000'
-		[[ ! "$1" =~ ($valid) ]]
+		[[ ! "$1" =~ ^($valid)$ ]]
 	then
 		set -- $deflimit "${2}" "${3}"
 		echo "$SN: valid limits -- ${valid//|/ }" >&2
