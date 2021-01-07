@@ -437,7 +437,7 @@ booktf() {
 	
 	#process data
 	#bid levels and total size
-	if ! BIDS=($(jq -r '.bids[]|.[1]' <<<"${BOOK}"))
+	if ! BIDS=($(jq -er '.bids[]|.[1]' <<<"${BOOK}"))
 	then
 		#if there was error, check if there is a message
 		jq -r .msg//empty <<<"$BOOK"
