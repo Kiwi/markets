@@ -1,6 +1,6 @@
 #!/bin/bash
 # cmc.sh -- coinmarketcap.com api access
-# v0.11.5  dec/2020  by mountaineerbr
+# v0.11.7  jan/2021  by mountaineerbr
 
 #your cmc api key
 #CMCAPIKEY=
@@ -176,14 +176,27 @@ FIATCODES=( USD AUD BRL CAD CHF CLP CNY CZK DKK EUR GBP HKD
 	MNT NAD NIO NPR OMR PAB QAR RSD SAR SSP TND TTD UGX
 	UYU UZS VES XAU XAG XPD XPT )
 
+#trap cleaning func
+cleanf()
+{
+	trap \  INT HUP EXIT
+
+	#rm temp dir
+	[[ -d "$TMPD" ]] && rm -rf "$TMPD"
+
+	exit 0
+}
+
 #check for error response
 errf() {
-	RESP="$(jq -r '.status|.error_code? // empty' <<<"$ck" )"
+	local ck="$1"
+
+	RESP="$(jq -r '.status|.error_code? // empty' <"$ck")"
 
 	if { [[ -n "$RESP" ]] && ((RESP>0)) ;} ||
-		grep -qiE -e 'have been (rate limited|black|banned)' -e 'has banned you' -e 'are being rate limited' <<<"$ck"
+		grep -qiE -e 'have been (rate limited|black|banned)' -e 'has banned you' -e 'are being rate limited' "$ck"
 	then
-		if ! jq -er '.status | .error_message? // empty' <<<"$ck"
+		if ! jq -er '.status | .error_message? // empty' <"$ck"
 		then
 			printf 'Err: run script with -j to check server response\n' >&2
 		fi
@@ -191,7 +204,7 @@ errf() {
 		#print json?
 		if (( PJSON ))
 		then
-			printf '%s\n' "$ck"
+			cat "$ck"
 			exit 0
 		fi
 
@@ -203,7 +216,7 @@ errf() {
 
 #-b bank currency rate function
 bankf() {
-	unset BANK
+	BANK=1
 
 	#rerun script, get rates and process data
 	if [[ "${2^^}" = BTC ]]
@@ -265,23 +278,24 @@ mcapf() {
 	fi
 
 	#get market data
-	CMCGLOBAL="$(curl -s --compressed -H "X-CMC_PRO_API_KEY:  ${CMCAPIKEY}" -H 'Accept: application/json' -d "convert=${1^^}" -G 'https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest')"
+	CMCGLOBAL="$TMPD/cmcglobal.json"
+	curl -s --compressed -H "X-CMC_PRO_API_KEY:  ${CMCAPIKEY}" -H 'Accept: application/json' -d "convert=${1^^}" -G 'https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest' -o "$CMCGLOBAL"
 
 	#print json?
 	if (( PJSON ))
 	then
-		echo "${CMCGLOBAL}"
+		cat "${CMCGLOBAL}"
 		exit 0
 	fi
 
 	#check error response
-	ck="${CMCGLOBAL}" errf || exit 1
+	errf "$CMCGLOBAL" || exit 1
 
 	#-d dominance opt
 	if [[ -n "${DOMOPT}" ]]
 	then
-		btc="$(jq -r '.data.btc_dominance' <<< "${CMCGLOBAL}")"
-		eth="$(jq -r '.data.eth_dominance' <<< "${CMCGLOBAL}")"
+		btc="$(jq -r '.data.btc_dominance' <"$CMCGLOBAL")"
+		eth="$(jq -r '.data.eth_dominance' <"$CMCGLOBAL")"
 		oth="$( bc <<<"scale=8; 100 - ($btc + $eth)/1" )"
 		sum="$( bc <<<"scale=8; ($btc + $eth + $oth)/1" )"
 
@@ -293,46 +307,46 @@ mcapf() {
 	fi
 
 	#timestamp
-	LASTUP="$(jq -r '.data.last_updated' <<< "${CMCGLOBAL}")"
+	LASTUP="$(jq -r '.data.last_updated' <"$CMCGLOBAL")"
 
 	#avoid erros being printed
 	{
 	printf '## CRYPTO MARKET INFORMATION\n'
 	date --date "${LASTUP}"  '+#  %FT%T%Z'
-	printf '\n# Exchanges     : %s\n' "$(jq -r '.data.active_exchanges' <<< "${CMCGLOBAL}")"
-	printf '# Active cryptos: %s\n' "$(jq -r '.data.active_cryptocurrencies' <<< "${CMCGLOBAL}")"
-	printf '# Market pairs  : %s\n' "$(jq -r '.data.active_market_pairs' <<< "${CMCGLOBAL}")"
+	printf '\n# Exchanges     : %s\n' "$(jq -r '.data.active_exchanges' <"$CMCGLOBAL")"
+	printf '# Active cryptos: %s\n' "$(jq -r '.data.active_cryptocurrencies' <"$CMCGLOBAL")"
+	printf '# Market pairs  : %s\n' "$(jq -r '.data.active_market_pairs' <"$CMCGLOBAL")"
 
 	printf '\n## All Crypto Market Cap\n'
-	printf "   %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.total_market_cap" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "   %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.total_market_cap" <"$CMCGLOBAL")" "${1^^}"
 	printf ' # Last 24h Volume\n'
-	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.total_volume_24h" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.total_volume_24h" <"$CMCGLOBAL")" "${1^^}"
 	printf ' # Last 24h Reported Volume\n'
-	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.total_volume_24h_reported" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.total_volume_24h_reported" <"$CMCGLOBAL")" "${1^^}"
 
 	printf '\n## Bitcoin Market Cap\n'
-	printf "   %'.2f %s\n" "$(jq -r "(.data.quote.${1^^}.total_market_cap-.data.quote.${1^^}.altcoin_market_cap)" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "   %'.2f %s\n" "$(jq -r "(.data.quote.${1^^}.total_market_cap-.data.quote.${1^^}.altcoin_market_cap)" <"$CMCGLOBAL")" "${1^^}"
 	printf ' # Last 24h Volume\n'
-	printf "    %'.2f %s\n" "$(jq -r "(.data.quote.${1^^}.total_volume_24h-.data.quote.${1^^}.altcoin_volume_24h)" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "    %'.2f %s\n" "$(jq -r "(.data.quote.${1^^}.total_volume_24h-.data.quote.${1^^}.altcoin_volume_24h)" <"$CMCGLOBAL")" "${1^^}"
 	printf ' # Last 24h Reported Volume\n'
-	printf "    %'.2f %s\n" "$(jq -r "(.data.quote.${1^^}.total_volume_24h_reported-.data.quote.${1^^}.altcoin_volume_24h_reported)" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "    %'.2f %s\n" "$(jq -r "(.data.quote.${1^^}.total_volume_24h_reported-.data.quote.${1^^}.altcoin_volume_24h_reported)" <"$CMCGLOBAL")" "${1^^}"
 	printf '## Circulating Supply\n'
 	printf " # BTC: %'.2f bitcoins\n" "$(bc <<< "scale=16; $(curl -s --compressed "https://blockchain.info/q/totalbc")/100000000")"
 
 	printf '\n## AltCoin Market Cap\n'
-	printf "   %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.altcoin_market_cap" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "   %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.altcoin_market_cap" <"$CMCGLOBAL")" "${1^^}"
 	printf ' # Last 24h Volume\n'
-	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.altcoin_volume_24h" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.altcoin_volume_24h" <"$CMCGLOBAL")" "${1^^}"
 	printf ' # Last 24h Reported Volume\n'
-	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.altcoin_volume_24h_reported" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf "    %'.2f %s\n" "$(jq -r ".data.quote.${1^^}.altcoin_volume_24h_reported" <"$CMCGLOBAL")" "${1^^}"
 
 	printf '\n## Dominance\n'
-	printf " # BTC: %'.2f %%\n" "$(jq -r '.data.btc_dominance' <<< "${CMCGLOBAL}")"
-	printf " # ETH: %'.2f %%\n" "$(jq -r '.data.eth_dominance' <<< "${CMCGLOBAL}")"
+	printf " # BTC: %'.2f %%\n" "$(jq -r '.data.btc_dominance' <"$CMCGLOBAL")"
+	printf " # ETH: %'.2f %%\n" "$(jq -r '.data.eth_dominance' <"$CMCGLOBAL")"
 
 	printf '\n## Market Cap per Coin\n'
-	printf " # Bitcoin : %'.2f %s\n" "$(jq -r "((.data.btc_dominance/100)*.data.quote.${1^^}.total_market_cap)" <<< "${CMCGLOBAL}")" "${1^^}"
-	printf " # Ethereum: %'.2f %s\n" "$(jq -r "((.data.eth_dominance/100)*.data.quote.${1^^}.total_market_cap)" <<< "${CMCGLOBAL}")" "${1^^}"
+	printf " # Bitcoin : %'.2f %s\n" "$(jq -r "((.data.btc_dominance/100)*.data.quote.${1^^}.total_market_cap)" <"$CMCGLOBAL")" "${1^^}"
+	printf " # Ethereum: %'.2f %s\n" "$(jq -r "((.data.eth_dominance/100)*.data.quote.${1^^}.total_market_cap)" <"$CMCGLOBAL")" "${1^^}"
 	#avoid erros being printed
 	} 2>/dev/null
 }
@@ -340,21 +354,22 @@ mcapf() {
 #-l print currency lists
 listsf() {
 	#get data
-	PAGE="$(curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json' -G 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map')"
+	PAGE="$TMPD/page.json"
+	curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json' -G 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/map' -o "$PAGE"
 
 	#print json?
 	if (( PJSON ))
 	then
-		echo "${PAGE}"
+		cat "${PAGE}"
 		exit 0
 	fi
 
 	#check error response
-	ck="${PAGE}" errf || exit 1
+	errf "$PAGE" || exit 1
 
 	#make table
 	printf 'CRYPTOCURRENCIES\n'
-	LIST="$(jq -r '.data[] | "\(.id)=\(.symbol)=\(.name)"' <<<"${PAGE}")"
+	LIST="$(jq -r '.data[] | "\(.id)=\(.symbol)=\(.name)"' <"${PAGE}")"
 	column -s'=' -et -N 'ID,SYMBOL,NAME' <<<"${LIST}"
 
 	printf '\nBANK CURRENCIES\n'
@@ -402,20 +417,21 @@ timeseriesf()
 	(( id )) || return 1
 
 	#get data
-	data="$( curl -sL --compressed --header "$uag" "https://web-api.coinmarketcap.com/v1.1/cryptocurrency/quotes/historical?convert=${tocur:-${2^^}}&format=chart_crypto_details&id=${id}&interval=${int}&time_end=${end}&time_start=${start}" )"
+	data="$TMPD/timeseries.json" 
+	curl -sL --compressed --header "$uag" "https://web-api.coinmarketcap.com/v1.1/cryptocurrency/quotes/historical?convert=${tocur:-${2^^}}&format=chart_crypto_details&id=${id}&interval=${int}&time_end=${end}&time_start=${start}" -o "$data"
 
 	#print json?
 	if (( PJSON ))
 	then
-		echo "$data"
+		cat "$data"
 		exit 0
 	fi
 
 	#extract relevant data
-	keys="$( <<<"$data" jq -r '.data | keys_unsorted[]')"
-	prices="$( <<<"$data" jq -r '.data[] | .[] |.[0] ')" 
-	vol24h="$( <<<"$data" jq -r '.data[] | .[] |.[1] ')" 
-	mcap="$( <<<"$data" jq -r '.data[] | .[] |.[2] ')" 
+	keys="$( jq -r '.data | keys_unsorted[]' <"$data")"
+	prices="$( jq -r '.data[] | .[] |.[0] ' <"$data")" 
+	vol24h="$( jq -r '.data[] | .[] |.[1] ' <"$data")" 
+	mcap="$( jq -r '.data[] | .[] |.[2] ' <"$data")" 
 
 	#make table
 	paste <(echo "$prices") <(echo "$mcap") <(echo "${vol24h}") <(echo "$keys") |
@@ -424,22 +440,23 @@ timeseriesf()
 
 #-a api status
 apif() {
-	PAGE="$(curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json'  'https://pro-api.coinmarketcap.com/v1/key/info')"
+	PAGESTAT="$TMPD/stat.json"
+	curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json'  'https://pro-api.coinmarketcap.com/v1/key/info' -o "$PAGESTAT"
 
 	#print json?
 	if (( PJSON ))
 	then
-		echo "${PAGE}"
+		cat "$PAGESTAT"
 		exit 0
 	fi
 
 	#check error response
-	ck="${PAGE}" errf || exit 1
+	errf "$PAGESTAT" || exit 1
 
 	#print heading and status page
 	printf 'API key: %s\n\n' "${CMCAPIKEY}"
 	
-	jq <<<"${PAGE}"
+	jq <"$PAGESTAT"
 }
 
 #precious metals in grams?
@@ -496,22 +513,24 @@ satoshif()
 #defaults func -- currency converter
 mainf()
 {
-	CMCJSON="$(curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json' -d "&symbol=${2^^}&convert=${3^^}" -G 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest')"
+	export CMCJSON="$TMPD/cmc.json"
+	[[ -e "$CMCJSON" ]] && ((BANK==0)) ||
+		curl -s --compressed -H "X-CMC_PRO_API_KEY: ${CMCAPIKEY}" -H 'Accept: application/json' -d "&symbol=${2^^}&convert=${3^^}" -G 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest' -o "$CMCJSON"
 	
 	#print json?
 	if (( PJSON ))
 	then
-		echo "$CMCJSON"
+		cat "$CMCJSON"
 		exit 0
 	fi
 
 	#get pair rate
-	CMCRATE="$(jq -r ".data[] | .quote.${3^^}.price" <<< "${CMCJSON}" | sed 's/e/*10^/g')"
+	CMCRATE="$(jq -r ".data[] | .quote.${3^^}.price" <"${CMCJSON}" | sed 's/e/*10^/g')"
 	
 	#print json timestamp ?
 	if (( TIMEST ))
 	then
-		JSONTIME="$(jq -r ".data.${2^^}.quote.${3^^}.last_updated" <<< "${CMCJSON}")"
+		JSONTIME="$(jq -r ".data.${2^^}.quote.${3^^}.last_updated" <"${CMCJSON}")"
 		if [[ -n "$JSONTIME" ]]
 		then
 			date --date "$JSONTIME" +%FT%T%Z
@@ -620,6 +639,10 @@ then
 	((SATOPT)) && SCL=0
 fi
 
+#make temo dir, lots of data
+trap cleanf INT HUP EXIT
+TMPD="$(mktemp -d)"
+
 #call opt functions
 if (( MCAP ))
 then
@@ -674,7 +697,7 @@ fi
 
 #default markets -- get data
 #if error response
-if ! ck="${CMCJSON}" errf 2>/dev/null
+if ! errf "${CMCJSON}" 2>/dev/null
 then
 	#try the bank function
 	bankf "${@}"
