@@ -88,7 +88,7 @@ fi
 
 
 if [[ -n "$tsopt" ]]; then
-	[[ ! "$1" =~ ^[0-4]+$ ]] && set -- 3 && echo 'set to default opt 3' 1>&2
+	[[ "$1" != [0-4] ]] && set -- 3 && echo 'set to default opt 3' 1>&2
 
 	#time series Contracts opt -- Default option
 	CONTRACTURL="https://www.theice.com/marketdata/DelayedMarkets.shtml?getHistoricalChartDataAsJson=&marketId=6137574&historicalSpan=$1"
