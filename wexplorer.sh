@@ -10,7 +10,7 @@ options:
 	a - all transactions from an address
 	w - all addresses from a wallet
 	t - check a transaction
-w3m and gunzip are required
+very slow api. w3m and gunzip are required.
 <https://www.walletexplorer.com>"
 
 sedwidf()
