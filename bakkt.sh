@@ -1,11 +1,11 @@
 #!/bin/bash
-# v0.1.22  jan/2021  by castaway
+# v0.1.23  jan/2021  by castaway
 
 #make sure locale is set correctly
 export LC_NUMERIC=C
 
 HELP="SYNOPSIS
-	bakkt.sh [-t]
+	bakkt.sh [-t NUM]
 	bakkt.sh [-hv]
 
 	Bakkt price ticker and contract volume from <https://www.bakkt.com/>
@@ -33,8 +33,8 @@ WARRANTY
 OPTIONS
 	-j 	Debug; print JSON.
 	-h 	Show this help.
-	-t 	Time series, contract price; select time range
-		with argument 1-3; defaults=3.
+	-t NUM	Time series, contract price; select time range
+		with NUM 1-3; defaults=3.
 	-v 	Print this script version."
 
 
