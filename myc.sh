@@ -1,12 +1,18 @@
 #!/bin/bash
 # myc.sh - Currency converter, API access to MyCurrency.com
-# v0.3.5  jun/2020  by mountaineerbr
+# v0.4  jan/2021  by mountaineerbr
 
 ## Defaults
-# Scale (decimal plates):
-SCLDEFAULTS=6
 
-#Don't change this:
+#from currency
+DEFFROMCUR=EUR
+#to currency
+DEFTOCUR=USD
+
+# Scale (decimal plates):
+DEFSCL=6
+
+#Do not change the following
 #make sure locale is set correctly
 export LC_NUMERIC=C
 
@@ -19,30 +25,36 @@ HELP_LINES="NAME
 
 
 SYNOPSIS
-	myc.sh [-hlv]
-
 	myc.sh [-sNUM] [AMOUNT] [FROM_CURRENCY] [TO_CURRENCY]
+	myc.sh [-hlv]
 
 
 DESCRIPTION
-	Myc.sh fetches central bank currency rates from <mycurrency.net> and
-	can convert any amount of one supported currency into another. It sup-
-	ports 163 currency rates at the moment. Precious metals and crypto-
-	currency rates are not supported.	
-	
-	AMOUNT can be a floating point number or a math expression that is un-
-	derstandable by Bash Bc.
+	Myc.sh fetches central bank currency rates from <mycurrency.net>
+	and can convert any amount of one supported currency into another.
+	It supports 163 currency rates at the moment. Precious metals
+	and cryptocurrency rates are not supported.	
 
-	Rates are updated every hour. This is a really simple and good API.
+	AMOUNT can be a floating point number or a math expression that
+	is understandable by GNU bc.
+
+	If no currency is given, defaults to $DEFFROMCUR against $DEFTOCUR .
+
+	Set decimal plates with option -sNUM, in which NUm is an integer,
+	or simple -NUM , scale defaults=$DEFSCL .
+
+	Rates are updated every hour. This is a really simple and good
+	API.
 
 
 WARRANTY
-	Licensed under the GNU Public License v3 or better and is distributed
-	without support or bug corrections.
+	Licensed under the GNU Public License v3 or better and is
+	distributed without support or bug corrections.
 
 	Required packages: bash, jq, curl or wget and gzip.
 
-	If you found this script useful, consider giving me a nickle! =)
+	If you found this script useful, consider giving me a nickle!
+		=)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr
 
@@ -72,50 +84,40 @@ USAGE EXAMPLES
 
 
 OPTIONS
+	-NUM 	Same as -sNUM .
 	-h 	Show this help.
-
 	-j 	Debug, print JSON.
-	
-	-l 	List supported currencies, if no symbol is given, rates
-	   	against USD.
-	
-	-s NUM 	Scale (decimal plates), defaults=${SCLDEFAULTS}.
-	
+	-l [CURRENCY]
+		List supported currencies; if CURRENCY is not given
+		rates defaults to $DEFTOCUR .
+	-s NUM 	Scale (decimal plates), defaults=$DEFSCL .
 	-v 	Print this script version."
 
-# Check if there is any argument
-if [[ -z "${@}" ]]; then
-	printf "Run with -h for help.\n"
-	exit 1
-fi
-# Check if you are requesting any precious metals.
-if grep -qi -e "XAU" -e "XAG" -e "XAP" -e "XPD" <<< "${*}"; then
-	printf "Mycurrency.com does not support precious metals.\n" 1>&2
-	exit 1
-fi
-
 # Parse options
-while getopts ":lhjs:v" opt; do
-  case ${opt} in
+while getopts :0123456789lhjs:v opt; do
+  case $opt in
+	[0-9] ) #scale setting
+		SCL="${SCL}${opt}"
+		;;
   	l ) ## List available currencies
 		LISTOPT=1
 		;;
 	h ) # Show Help
-		echo -e "${HELP_LINES}"
+		echo "$HELP_LINES"
 		exit 0
 		;;
 	j ) # Print JSON
 		PJSON=1
 		;;
 	s ) # Decimal plates
-		SCL=${OPTARG}
+		SCL=$OPTARG
 		;;
 	v ) # Version of Script
-		head "${0}" | grep -e '# v'
-		exit
+		grep -m1 '# v'
+		exit 
 		;;
 	\? )
-		printf "Invalid option: -%s.\n" "$OPTARG" 1>&2
+		echo "Invalid option: -$OPTARG" >&2
 		exit 1
 		;;
   esac
@@ -124,82 +126,88 @@ shift $((OPTIND -1))
 
 #Check for JQ
 if ! command -v jq &>/dev/null; then
-	printf "JQ is required.\n" 1>&2
+	echo "JQ is required" >&2
 	exit 1
 fi
 
 # Test if cURL or Wget is available
 if command -v curl &>/dev/null; then
-	YOURAPP='curl -sL --compressed'
+	YOURAPP=(curl -sL --compressed)
 elif command -v wget &>/dev/null; then
-	YOURAPP="wget -qO-"
+	YOURAPP=(wget -qO-)
 else
-	printf "Package cURL or Wget is needed.\n" 1>&2
+	echo "Package cURL or Wget is required" >&2
 	exit 1
 fi
 
 #request compressed response
-if ! command -v gzip &>/dev/null; then
-	printf 'warning: gzip may be required\n' 1>&2
-fi
+#warning: gzip may be required
 
 
 ## Set default scale if no custom scale
-test -z "${SCL}" && SCL="${SCLDEFAULTS}"
+[[ -n "$SCL" ]] || SCL="$DEFSCL"
 
+# Check arguments (currencies)
 # Set equation arquments
-if ! [[ ${1} =~ [0-9] ]]; then
-	set -- 1 ${@:1:2}
+if [[ "$1" != *[0-9]* ]]; then
+	set -- 1 "${@:1:2}"
 fi
 
-if [[ -z ${3} ]]; then
-	set -- ${@:1:2} "USD"
+if [[ -z "$2" ]]; then
+	set -- "$1" "$DEFFROMCUR" "${@:3:1}"
+fi
+
+if [[ -z "$3" ]]; then
+	set -- "${@:1:2}" "$DEFTOCUR"
+fi
+
+# Check if you are requesting any precious metals.
+if grep -qwi -e "XAU" -e "XAG" -e "XAP" -e "XPD" <<<"$*"; then
+	echo "Mycurrency.com does not support precious metals" >&2
+	exit 1
 fi
 
 ## Get JSON once
-JSON="$(${YOURAPP} "https://www.mycurrency.net/US.json")"
+JSON="$("${YOURAPP[@]}" "https://www.mycurrency.net/US.json")"
 
 ## Print JSON?
-if [[ -n "${PJSON}" ]]; then
-	printf "%s\n" "${JSON}"
+if ((PJSON)); then
+	echo "$JSON"
 	exit
 fi
 ## List all suported currencies and USD rates?
-if [[ -n ${LISTOPT} ]]; then
+if ((LISTOPT)); then
 
 	# Test screen width
 	# If stdout is open, trim some wide columns
 	if [[ -t 1 ]]; then
-		COLCONF="-TCOUNTRY,CURRENCY"
+		COLCONF=(-TCOUNTRY,CURRENCY)
 	fi
 
-	printf "Supported currencies against USD.\n"
-	jq -r '.rates[]|"\(.currency_code)=\(.rate)=\(.name) (\(.code|ascii_downcase))=\(.currency_name)=\(.hits)"' <<< "${JSON}" |
-		column -et -s'=' -N'SYMBOL,RATE,COUNTRY,CURRENCY,WEBHITS' ${COLCONF}
-	printf "Currencies: %s\n" "$(jq -r '.rates[].currency_code' <<< "${JSON}" | wc -l)"
+	echo "Supported currencies (against USD)"
+	jq -r '.rates[]|"\(.currency_code)=\(.rate)=\(.name) (\(.code|ascii_downcase))=\(.currency_name)=\(.hits)"' <<< "$JSON" |
+		column -et -s'=' -N'SYMBOL,RATE,COUNTRY,CURRENCY,WEBHITS' ${COLCONF[@]}
+	echo "Currencies: $(jq -r '.rates[].currency_code' <<< "$JSON" | wc -l)"
 	exit
 fi
 
 #check that symbols are supported
-if ! jq -r '.rates[].currency_code'<<<"${JSON}" | grep -q "^${2^^}$"; then 
+CURS="$(jq -r '.rates[].currency_code'<<<"$JSON")"
+if ! grep -qwi "$2" <<<"$CURS"; then 
 	printf 'Error: unsupported symbol -- %s\n' "${2^^}" 
 	exit 1
-elif ! jq -r '.rates[].currency_code'<<<"${JSON}" | grep -q "^${3^^}$"; then 
+elif ! grep -qwi "$3" <<<"$CURS"; then 
 	printf 'Error: unsupported symbol -- %s\n' "${3^^}" 
 	exit 1
 fi
 
 ## Grep currency data and rates
-CJSON=$(jq '[.rates[] | { key: .currency_code, value: .rate } ] | from_entries' <<< "${JSON}")
+CJSON=$(jq '[.rates[] | { key: .currency_code, value: .rate } ] | from_entries' <<< "$JSON")
 
 ## Get currency rates
-FROMCURRENCY=$(jq ".${2^^}" <<< "${CJSON}")
-TOCURRENCY=$(jq ".${3^^}" <<< "${CJSON}")
+FROMCURRENCY=$(jq ".${2^^}" <<< "$CJSON")
+TOCURRENCY=$(jq ".${3^^}" <<< "$CJSON")
 
 ## Make equation and print result
-bc -l <<< "scale=${SCL};((${1})*${TOCURRENCY})/${FROMCURRENCY}"
-
-exit
-
-#Dead code
+bc <<< "scale=$SCL ;( ( $1 ) * $TOCURRENCY ) / $FROMCURRENCY"
 
