@@ -1,6 +1,6 @@
 #!/bin/bash
 # myc.sh - Currency converter, API access to MyCurrency.com
-# v0.4.1  jan/2021  by mountaineerbr
+# v0.4.2  jan/2021  by mountaineerbr
 
 ## Defaults
 
@@ -46,6 +46,15 @@ DESCRIPTION
 
 	Rates are updated every hour. This is a really simple and good
 	API.
+
+
+NOTICE
+	There is now extensive documentation at <https://info.mycurrency.com>
+	which describes new API points.
+
+	The old API point from <mycurrency.net> is working alright for
+	now. However, if the old API stops being supported, I may not
+	implement the new ones in this script.
 
 
 WARRANTY
