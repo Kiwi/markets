@@ -1,6 +1,6 @@
 #!/bin/bash
 # myc.sh - Currency converter, API access to MyCurrency.com
-# v0.4  jan/2021  by mountaineerbr
+# v0.4.1  jan/2021  by mountaineerbr
 
 ## Defaults
 
@@ -38,7 +38,8 @@ DESCRIPTION
 	AMOUNT can be a floating point number or a math expression that
 	is understandable by GNU bc.
 
-	If no currency is given, defaults to $DEFFROMCUR against $DEFTOCUR .
+	If no currency is given, FROM_CURRENCY defaults to $DEFFROMCUR and
+	TO_CURRENCY always defaults to $DEFTOCUR if not given.
 
 	Set decimal plates with option -sNUM, in which NUm is an integer,
 	or simple -NUM , scale defaults=$DEFSCL .
