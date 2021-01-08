@@ -38,7 +38,7 @@ WARRANTY
 	This programme requires latest version of Bash, JQ, Websocat
 	or Wscat and Lolcat.
 
-	If you found this script useful, consider giving me a nickle!
+	If you found this script useful, consider sending me a nickle!
 		=)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr

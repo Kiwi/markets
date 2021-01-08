@@ -34,7 +34,7 @@ WARRANTY
 	It needs the latest version of Bash, Curl or Wget, Gzip, JQ,
 	Websocat and Lolcat to work properly.
 
-	If you found this script useful, consider giving me a nickle!
+	If you found this script useful, consider sending me a nickle!
 		=)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr

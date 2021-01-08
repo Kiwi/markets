@@ -60,7 +60,7 @@ WARRANTY
 	Licensed under the GNU Public License v3 or better. This programme
 	is distributed without support or bug corrections.
 
-	If you found this script useful, consider giving me a nickle! =)
+	If you found this script useful, consider sending me a nickle! =)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr
 

@@ -167,7 +167,7 @@ WARRANTY
 	This script needs the latest Bash, cURL or Wget, Gzip, JQ, Websocat
 	and GNU Coreutils packages to work properly.
 
-	If you found this script useful, please consider giving me a nickle.
+	If you found this script useful, please consider sending me a nickle.
 		=)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr

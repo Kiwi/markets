@@ -89,7 +89,7 @@ GARANTIA
 	
 	O script precisa do cURL ou Wget, JQ e Bash.
 
-	If this programme was useful, consider giving me a nickle!
+	If this programme was useful, consider sending me a nickle!
   
 	Se este programa foi útil, por favor considere me lançar
 	um trocado!

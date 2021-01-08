@@ -87,7 +87,7 @@ WARRANTY
 	That is _not_ advisable to depend solely on this script for serious
 	trading. Do your own research!
 
-	If you found this useful, please consider giving me a nickle.
+	If you found this useful, please consider sending me a nickle.
 		=)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr

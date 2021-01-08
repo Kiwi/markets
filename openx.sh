@@ -73,7 +73,7 @@ WARRANTY
 	<https://www.gnu.org/licenses/>.  
 	
 
-	If you found this useful, consider giving me a nickle! =)
+	If you found this useful, consider sending me a nickle! =)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr
      

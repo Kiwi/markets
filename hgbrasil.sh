@@ -44,7 +44,7 @@ GARANTIA
 	
 	O script precisa do cURL/Wget, JQ, Gzip e Bash.
 
-	If this programme was useful, consider giving me a nickle! =)
+	If this programme was useful, consider sending me a nickle! =)
   
 	Se este programa foi útil, considere me lançar um trocado!
 
