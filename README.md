@@ -4,37 +4,39 @@ Fig. 1. Scripts on display: binance.sh, bitfinex.sh, binfo.sh, bitstamp.sh, cgk.
 
 ---
 
-<b>SUMMARY</b>
+## SUMMARY
 
 This is a repo related to crypto, bank currency and stock markets.
 
-Run the script with '-h' for a help page. Check below for script descriptions, download and basic instructions to run them.
+Run the script with `-h` for a help page. Check below for script descriptions, download and basic instructions to run them.
 
-These bash scripts mostly need 'curl'. Some of them will work if you have got 'wget' instead, but not all of them. Other important packages are 'jq' and 'websocat' for some scripts.
+These bash scripts mostly need `curl`. Some of them will work if you have got `wget` instead, but not all of them. Other important packages are `jq` and `websocat` or `wscat` for some scripts.
 
 I cannot promise to follow up api changes and update these scripts once they start failing.  So I may just remove failing scripts or leave them broken..
 
 ---
 
-<b>SUMÁRIO</b>
+## SUMÁRIO
 
-Este repo é relacionado com mercados de cripto, de moedas de banco centrais e ações. Rode os scripts com '-h' para uma página de ajuda.
+Este repo é relacionado com mercados de cripto, de moedas de banco centrais e ações. Rode os scripts com `-h` para uma página de ajuda.
 
-A maioria desses scripts de bash precisam do 'curl'. Alguns irão funcionar se você tiver somente o 'wget', mas não todos. Outros pacotes importantes para alguns scripts são 'jq' e 'websocat'.
+A maioria desses scripts de bash precisam do `curl`. Alguns irão funcionar se você tiver somente o `wget`, mas não todos. Outros pacotes importantes para alguns scripts são `jq` e 'websocat' ou `wscat`.
 
 Não posso prometer acompanhar as alterações das APIs e atualizar esses scripts assim que começarem a falhar. Então, posso remover scripts com falha ou deixá-los quebrados..
 
 ---
 
-<b>INDEX / ÍNDICE</b>
+## INDEX / ÍNDICE
 
-<b>alpha.sh</b> -- Stocks and currency rates from <alphaavantage.co>, most popular yahoo finance api alternative; free api key.
+SCRIPT NAME | DESCRIPTION
+:-----------|:-----------
+_alpha.sh_| Stocks and currency rates from <alphaavantage.co>, most popular yahoo finance api alternative; free api key.
 
-<b>bakkt.sh --</b> Price and contract/volume tickers from bakkt public api.
+_bakkt.sh_| Price and contract/volume tickers from bakkt public api.
 
-<b>binance.sh --</b>  Binance public API, crypto converter, prices, book depth, coin ticker.
+_binance.sh_|  Binance public API, crypto converter, prices, book depth, coin ticker.
 
-<b>binfo.sh --</b> Blockchain explorer for bitcoin; uses <blockchain.info> and <blockchair.com> public apis; notification on new block found.
+binfo.sh| Blockchain explorer for bitcoin; uses <blockchain.info> and <blockchair.com> public apis; notification on new block found.
 
 <b>bitstamp.sh --</b> Bitstamp exchange public api for live trade prices/info.
 
