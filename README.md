@@ -66,7 +66,7 @@ __pricesroll.sh__ | script to open and arrange terminal windows with these marke
 __stocks.sh__ | <Financialmodelingprep.com> latest and historical stock and major index rates
 __tradingview.sh__ | just open some tradingview windows at the right screen position with xdotool
 __uol.sh__ | Fetches rates from uol service provider public api. Puxa dados de páginas da api pública do uol economia
-__wexplorer.sh__ | get some data from <https://www.walletexplorer.com>; this script usage is not very comprehensible
+__wexplorer.sh__ | get some data from <https://www.walletexplorer.com>; this script usage is not very comprehensible and API server may be slow
 __whalealert.sh__ | latest whale transactions from <whale-alert.io>; this is such a bad api, very limited, not even worth having written a script for this, free api key
 __yahooscrape.sh__ | scrape some yahoo! finance tickers
 
