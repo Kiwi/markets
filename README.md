@@ -42,14 +42,14 @@ Então, posso remover scripts com falha ou deixá-los quebrados..
 
 SCRIPT NAME | DESCRIPTION
 :-----------|:-----------
-__alpha.sh__| Stocks and currency rates from <alphaavantage.co>, most popular yahoo finance api alternative; free api key
-__bakkt.sh__| Price and contract/volume tickers from bakkt public api
-__binance.sh__|  Binance public API, crypto converter, prices, book depth, coin ticker
-binfo.sh| Blockchain explorer for bitcoin; uses <blockchain.info> and <blockchair.com> public apis; notification on new block found
+__alpha.sh__ | Stocks and currency rates from <alphaavantage.co>, most popular yahoo finance api alternative; free api key
+__bakkt.sh__ | Price and contract/volume tickers from bakkt public api
+__binance.sh__ |  Binance public API, crypto converter, prices, book depth, coin ticker
+binfo.sh__ | Blockchain explorer for bitcoin; uses <blockchain.info> and <blockchair.com> public apis; notification on new block found
 __bitstamp.sh__ | Bitstamp exchange public api for live trade prices/info
 __bitfinex.sh__ | Bitfinex exchange public api for live trade prices
 __brasilbtc.sh__ | Fetches bitcoin rates from brazilian exchanges public apis. Puxa cotações de bitcoin de agências de câmbio brasileiras de apis públicas
-__*cgk.sh__ | <Coinggecko.com> public api, convert one crypto, bank/fiat or metal currency into any another, market ticker, cryptocurrency ticker. This is my favorite everyday-use script for all-currency rates!
+___cgk.sh___ | <Coinggecko.com> public api, convert one crypto, bank/fiat or metal currency into any another, market ticker, cryptocurrency ticker. This is my favorite everyday-use script for all-currency rates!
 __clay.sh__ | <Currencylayer.com> central bank currency, precious metal and cryptocurrency converter, free api key
 __cmc.sh__ |  <Coinmarketcap.com> convert any amount of one crypto, bank/fiat currency or metal into any another, free api key
 __erates.sh__ | <Exchangeratesapi.io> public api, currency converter (same API as Alexander Epstein's Bash-Snippets/currency)
@@ -57,7 +57,7 @@ __foxbit.sh__ | FoxBit exchange public API rates. Acesso ao api público da Foxb
 __hgbrasil.sh__ | Bovespa and tax rates. Cotações de ações da Bovespa e índices e taxas (CDI e SELIC) do api da hg brasil
 __myc.sh__ | <Mycurrency.net> public api, central bank currency rate converter
 __metais.sh__ | script to retrieve various rates, mostly using other scripts from this repo; there are some unique shell functions, though
-__*mkt__func.sh__ | shell functions (bash and z-shell) to get some market data from public apis. Google Finance and Yahoo! Finance hacks.. these functions need improvement. source from this file to make these funtions available in your shell
+___mkt_func.sh___ | shell functions (bash and z-shell) to get some market data from public apis. Google Finance and Yahoo! Finance hacks.. these functions need improvement; source from this file to make these funtions available in your shell
 __novad.sh__ | puxa dados das apis públicas da NovaDax brasileira. fetch public api data from NovaDax brazilian enchange
 __openx.sh__ | <Openexchangerates.org> central bank currencies and precious metals converter, free api key
 __ourominas.sh__ | Ourominas (precious metals exchange) rates public api. Pega taxas da api pública da Ouro Minas
