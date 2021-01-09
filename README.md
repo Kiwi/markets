@@ -45,7 +45,7 @@ SCRIPT NAME | DESCRIPTION
 __alpha.sh__ | Stocks and currency rates from <alphaavantage.co>, most popular yahoo finance api alternative; free api key
 __bakkt.sh__ | Price and contract/volume tickers from bakkt public api
 __binance.sh__ |  Binance public API, crypto converter, prices, book depth, coin ticker
-binfo.sh__ | Blockchain explorer for bitcoin; uses <blockchain.info> and <blockchair.com> public apis; notification on new block found
+__binfo.sh__ | Blockchain explorer for bitcoin; uses <blockchain.info> and <blockchair.com> public apis; notification on new block found
 __bitstamp.sh__ | Bitstamp exchange public api for live trade prices/info
 __bitfinex.sh__ | Bitfinex exchange public api for live trade prices
 __brasilbtc.sh__ | Fetches bitcoin rates from brazilian exchanges public apis. Puxa cotações de bitcoin de agências de câmbio brasileiras de apis públicas
