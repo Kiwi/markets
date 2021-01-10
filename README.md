@@ -174,7 +174,7 @@ git clone https://github.com/mountaineerbr/markets.git
 chmod +x ~/Downloads/markets/*.sh
 ```
 
-You can use bash aliases to individual scripts or place them under your PATH.
+You can use bash aliases to individual scripts or place them under your $PATH .
 
 Some scripts need free api keys. You can test these scripts with
 the builtin demo key, however that may stop working at any time.
@@ -230,7 +230,7 @@ chmod +x ~/Downloads/markets/*.sh
 ```
 
 Você pode fazer bash aliases individuais para os scripts
-ou colocar os scripts sob seu PATH.
+ou colocar os scripts sob seu $PATH .
 
 Alguns scripts precisam de chaves de API gratuitas.
 Você pode testá-los com as chaves de APIs de demonstração
