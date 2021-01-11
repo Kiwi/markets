@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.24  dec/2020  by mountaineerbr
+# v0.13.25  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -1179,6 +1179,7 @@ shift $(( OPTIND - 1 ))
 export CGKTEMPLIST1 CGKTEMPLIST2 CGKRATERAW
 
 #set scale
+SCL_ORIG="$SCL"
 if [[ "$SCL" != 0 ]] && ! (( SCL ))
 then
 	SCL="$SCLDEFAULTS"
@@ -1262,7 +1263,13 @@ fi
 
 #change .=- to ``bitcoin''
 [[ "$2" = [.=-] ]] && 	set -- "$1" bitcoin "$3"
-[[ "$3" = [.=-] ]] && 	set -- "$1" "$2" btc
+if [[ "$3" = [.=-] ]]
+then
+	set -- "$1" "$2" btc
+	
+	#opt -x has preference over [.=-]
+	((SATOPT)) || SCL="${SCL_ORIG:-8}"
+fi
 
 #bank opt?
 #speed up script a little if these testes are met:
