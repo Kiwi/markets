@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.25  jan/2021  by mountaineerbr
+# v0.13.26  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -53,7 +53,7 @@ DESCRIPTION
 	List supported currency symbols and IDs with option -l. About
 	53 bank currencies (fiat) are supporterd, as well as gold and
 	silver. If FROM or VS_CURRENCY is set to any of .=- , it will
-	mean the same as bitcoin.
+	mean the same as bitcoin (and sets scale to 8 in some cases).
 	
 	Central bank currency conversions are supported indirectly by
 	locally calculating them with the cost of one extra call to the
