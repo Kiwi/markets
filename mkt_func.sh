@@ -728,7 +728,7 @@ loss()
 		g=$( bc <<< "scale=16; $f * 100" )
 	fi
 	
-	printf '_win: %.4f %%\n' "$g"
+	printf ' win: %.4f %%\n' "$g"
 }
 
 
