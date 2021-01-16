@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.8.34  jan/2021  by mountaineerbr
+# v0.8.36  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -838,7 +838,7 @@ rtxf() {
 	#print json?
 	if [[ -n  "${PJSON}" ]]; then
 		#only if from tx opts explicitly
-		printf 'JSON from the tx function.\n' 1>&2
+		printf 'JSON from the tx function\n' 1>&2
 		printf '%s\n' "${RAWTX}"
 		exit 0
 	fi
@@ -859,18 +859,19 @@ rtxf() {
 
 	jq -r '"",
 		"--------",
+		"  From_:",
+		(.inputs[].prev_out|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")"),
+		"  To___:",
+		(.out[]|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")"),
+		"",
+		"--------",
 		"TxHash_: \(.hash)",
 		"BlkHgt_: \(.block_height)\t\t\tVersion: \(.ver)",
 		"Tx_Size: \(.size) bytes\t\tWeight_: \(.weight)",
 		"LockTime: \(.lock_time)",
 		"Time___: \(.time | strftime("%Y-%m-%dT%H:%M:%SZ"))",
 		"LocalTi: \(.time |strflocaltime("%Y-%m-%dT%H:%M:%S%Z"))",
-		"Relayed: \(if .relayed_by == "0.0.0.0" then empty else .relayed_by end)",
-		"",
-		"  From_:",
-		(.inputs[].prev_out|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")"),
-		"  To___:",
-		(.out[]|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")")' <<< "${RAWTX}"
+		"Relayed: \(if .relayed_by == "0.0.0.0" then empty else .relayed_by end)"' <<< "${RAWTX}"
 }
 
 #-tt transaction info from <blockchair.com>
@@ -888,7 +889,17 @@ chairrtxf() {
 		exit 1
 	fi
 	printf 'Transaction Info (Blockchair)\n'
-	jq -r '(.data[].transaction|
+	jq -r '"",
+		"--------",
+		"  From:",
+		(.data[].inputs[]|
+			"    \(.recipient)  \(.value/100000000)  \(if .is_spent == true then "SPENT" else "UNSPENT" end)"
+		),
+		"  To__:",
+		(.data[].outputs[]|
+			"    \(.recipient)  \(.value/100000000) \(if .is_spent == true then "SPENT" else "UNSPENT" end)  ToTxID: \(.spending_transaction_id)"
+		),
+		(.data[].transaction|
 			"",
 			"--------",
 			"Hash____: \(.hash)",
@@ -902,16 +913,7 @@ chairrtxf() {
 			"Fee_rate: \(.fee_usd // "??") USD  \(.fee_per_kb_usd // "??") USD/KB",
 			"LockTime: \(.lock_time)",
 			"Time____: \(.time)Z",
-			"LocalTim: \(.time | strptime("%Y-%m-%d %H:%M:%S")|mktime|strflocaltime("%Y-%m-%dT%H:%M:%S%Z"))",
-			""
-		),
-		"  From:",
-		(.data[].inputs[]|
-			"    \(.recipient)  \(.value/100000000)  \(if .is_spent == true then "SPENT" else "UNSPENT" end)"
-		),
-		"  To__:",
-		(.data[].outputs[]|
-			"    \(.recipient)  \(.value/100000000) \(if .is_spent == true then "SPENT" else "UNSPENT" end)  ToTxID: \(.spending_transaction_id)"
+			"LocalTim: \(.time | strptime("%Y-%m-%d %H:%M:%S")|mktime|strflocaltime("%Y-%m-%dT%H:%M:%S%Z"))"
 		)' <<< "${TXCHAIR}"
 }
 
