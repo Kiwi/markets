@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.14  jan/2021  by mountaineerbr
+# v0.10.15  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -547,67 +547,67 @@ lcoinsf() {
 while getopts 1234567890abcdofhjlistuwvrXz opt
 do
 	case $opt in
-		( [0-9] ) #scale setting
+		[0-9]) #scale setting
 			SCL="${SCL}${opt}"
 			;;
-		( a ) 	#autoreconnect
+		a) 	#autoreconnect
 			AUTOR=( - autoreconnect: )
 			;;
-		( c ) #price in columns
+		c) #price in columns
 			COPT=1
 			;;
-		( b ) #order book depth view
+		b) #order book depth view
 			(( BOPT )) && BOPT=2 ||	BOPT=1
 			;;
-		( d ) #print lines that fetch data
+		d) #print lines that fetch data
 			#printf 'Script cmds to fetch data:\n'
 			#grep -e 'YOURAPP' -e 'WEBSOCATC' <"${0}" | sed -e 's/^[ \t]*//' | sort
 			DOPT=1
 			;;
-		( [of] ) #format thousands option
+		o|f) #format thousands option
 			THOUSANDOPT="'"
 			;;
-		( h ) #help
+		h) #help
 			echo "${HELP}"
 			exit 0
 			;;
-		( i ) #detailed latest trade information
+		i) #detailed latest trade information
 			IOPT=1
 			;;
-		( j ) #binance jersey
+		j) #binance jersey
 			WHICHB=je
 			;;
-		( l ) #list markets
+		l) #list markets
 			LOPT=1
 			;;
-		( r ) #curl instead of websocat
+		r) #curl instead of websocat
 			CURLOPT=1
 			;;
-		( s ) #stream of trade prices
+		s) #stream of trade prices
 			COLORC=(cat)
 			SOPT=1
 			;;
-		( t ) #rolling ticker 
+		t) #rolling ticker 
 			TOPT=1
 			;;
-		( u ) #binance us
+		u) #binance us
 			WHICHB='us'
 			;;
-		( v ) #script version
+		v) #script version
 			grep -m1 '\# v' "${0}"
 			exit 0
 			;;
-		( w ) #coloured stream of trade prices
+		w) #coloured stream of trade prices
 			SOPT=1
 			COLORC=(lolcat -p 2000 -F 5)
 			;;
-		( X ) #prefer wscat instead of websoccat
+		X) #prefer wscat instead of websoccat
 			XOPT=1
 			;;
-		( z ) #time in UTC and nanoseconds
+		z) #time in UTC and nanoseconds
 			export TZ=UTC
 			;;
-		( \? )
+		\?)
 			#echo "$SN: invalid option -- -${OPTARG}" >&2
 			exit 1
 			;;
@@ -666,7 +666,7 @@ if [[ "$SCL" != 0 ]] && ! (( SCL ))
 then
 	SCL="$SCLDEFAULTS"
 
-	#if option -f or -o is set, scale defaults to 2
+	#if option -o is set, scale defaults to 2
 	[[ -n "$THOUSANDOPT" ]] && SCL=2
 fi
 
