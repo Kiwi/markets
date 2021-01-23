@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.13  jan/2021  by mountaineerbr
+# v0.10.14  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -665,6 +665,9 @@ WSSADD="${AUTOR[1]}wss://stream.binance.${WHICHB}:9443/ws/"
 if [[ "$SCL" != 0 ]] && ! (( SCL ))
 then
 	SCL="$SCLDEFAULTS"
+
+	#if option -f or -o is set, scale defaults to 2
+	[[ -n "$THOUSANDOPT" ]] && SCL=2
 fi
 
 #make printf string (2)
