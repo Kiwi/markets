@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.26  jan/2021  by mountaineerbr
+# v0.13.27  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -1184,7 +1184,10 @@ if [[ "$SCL" != 0 ]] && ! (( SCL ))
 then
 	SCL="$SCLDEFAULTS"
 
-	#set result scale to nought if opt -x is set by defaults
+	#set result scale to 2 if opt -o is set
+	[[ -n "$OOPT" ]] && SCL=2
+
+	#set result scale to nought if opt -x is set
 	((SATOPT)) && SCL=0
 fi
 
