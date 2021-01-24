@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.9.3  jan/2021  by mountaineerbr
+# v0.9.5  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -861,12 +861,14 @@ rtxf() {
 
 	jq -r '"",
 		"--------",
+		"Transaction vectors",
 		"  From_:",
 		(.inputs[].prev_out|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")"),
 		"  To___:",
 		(.out[]|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")"),
 		"",
 		"",
+		"Transaction information",
 		"TxHash_: \(.hash)",
 		"BlkHgt_: \(.block_height)\t\t\tVersion: \(.ver)",
 		"Tx_Size: \(.size) bytes\t\tWeight_: \(.weight)",
@@ -893,6 +895,7 @@ chairrtxf() {
 	printf 'Transaction Info (Blockchair)\n'
 	jq -r '"",
 		"--------",
+		"Transaction vectors",
 		"  From:",
 		(.data[].inputs[]|
 			"    \(.recipient)  \(.value/100000000)  \(if .is_spent == true then "SPENT" else "UNSPENT" end)"
@@ -904,6 +907,7 @@ chairrtxf() {
 		(.data[].transaction|
 			"",
 			"",
+			"Transaction information",
 			"Hash____: \(.hash)",
 			"TxIndex_: \(.id)\tVersion: \(.version)",
 			"Block_ID: \(.block_id)\tCDD____: \(.cdd_total) \(if .is_coinbase == true then "(Coinbase)" else "" end)",
@@ -1156,23 +1160,23 @@ else
 		for arg in "$@"
 		do
 			#is legacy addr?
-			if [[ "$arg" =~ ^[13][a-km-zA-HJ-NP-Z1-9]{25,34} ]]
+			if [[ "$arg" =~ ^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$ ]]
 			then
 				ok=1
 				#addr
 				raddf "$arg"
 			#is bech32 addr?
-			elif [[ "$arg" =~ ^bc(0([ac-hj-np-z02-9]{39}|[ac-hj-np-z02-9]{59})|1[ac-hj-np-z02-9]{8,87}) ]]
+			elif [[ "$arg" =~ ^bc(0([ac-hj-np-z02-9]{39}|[ac-hj-np-z02-9]{59})|1[ac-hj-np-z02-9]{8,87})$ ]]
 			then
 				ok=1
 				#addr
 				chairaddf "$arg"
 			#is tx or block?
-			elif [[ "$arg"  =~ ^[a-fA-F0-9]{64} ]]
+			elif [[ "$arg"  =~ ^[a-fA-F0-9]{64}$ ]]
 			then
 				ok=1
 				#is block?
-				if [[ "$arg" =~ ^[0]{8}[a-fA-F0-9]{56} ]]
+				if [[ "$arg" =~ ^[0]{8}[a-fA-F0-9]{56}$ ]]
 				then
 					#block by hash
 					rblockf "$arg"
