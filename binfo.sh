@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.9.2  jan/2021  by mountaineerbr
+# v0.9.3  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -308,7 +308,7 @@ sstreamf() {
 					"Bits___: \(.bits)\t\tNonce__: \(.nonce)",
 					"Height_: \(.height)\t\t\tDiff___: \(.difficulty)",
 					"TxCount: \(.nTx)\t\t\tVersion: \(.version)",
-					"Size___: \(.size) (\(.size/1000) KB)\tWeight_: \(.weight)",
+					"Size___: \(.size) (\(.size/1000) KB)\tWeight_: \(.weight) WU",
 					"Output_: \(.totalBTCSent/100000000) BTC\tEstVol_: \(.estimatedBTCSent/100000000) BTC",
 					"BlkTime: \(.time|strftime("%Y-%m-%dT%H:%M:%SZ"))\tLocalT_: \(.time|strflocaltime("%Y-%m-%dT%H:%M:%S%Z"))",
 					"Receivd: \(now|round|strftime("%Y-%m-%dT%H:%M:%SZ"))\tLocalT_: \(now|round|strflocaltime("%Y-%m-%dT%H:%M:%S%Z"))"
@@ -558,15 +558,15 @@ rblockf() {
 		"MerklRt: \(.mrkl_root)",
 		"PrevBlk: \(.prev_block)",
 		"NextBlk: \(.next_block[])",
-		"Time___: \(.time|strftime("%Y-%m-%dT%H:%M:%SZ"))",
-		"LocalT_: \(.time | strflocaltime("%Y-%m-%dT%H:%M:%S%Z"))",
 		"Bits___: \(.bits)\tNonce__: \(.nonce)",
 		"Version: \(.ver)\tChain__: \(if .main_chain == true then "Main" else "Secondary" end)",
 		"Height_: \(.height)\t\tWeight_: \(.weight)",
 		"BlkSize: \(.size/1000) KB\tTxCount: \(.n_tx)",
 		"TotlFee: \(.fee/100000000) BTC",
 		"Avg_Fee: \(.fee/.size) sat/byte",
-		"Relayed: \(.relayed_by // empty)"' <<< "${RAWB}"
+		"Relayed: \(.relayed_by // empty)",
+		"Time___: \(.time|strftime("%Y-%m-%dT%H:%M:%SZ"))",
+		"LocalT_: \(.time | strflocaltime("%Y-%m-%dT%H:%M:%S%Z"))"' <<< "${RAWB}"
 
 	#some more stats
 	#calculate total volume
@@ -907,7 +907,7 @@ chairrtxf() {
 			"Hash____: \(.hash)",
 			"TxIndex_: \(.id)\tVersion: \(.version)",
 			"Block_ID: \(.block_id)\tCDD____: \(.cdd_total) \(if .is_coinbase == true then "(Coinbase)" else "" end)",
-			"Size____: \(.size) bytes\tWeight_: \(.weight)",
+			"Size____: \(.size) bytes\tWeight_: \(.weight) WU",
 			"Inputs__: \(.input_count)\t\tOutputs: \(.output_count)",
 			"TotalIn_: \(.input_total)  \(.input_total_usd) USD",
 			"TotalOut: \(.output_total)  \(.output_total_usd) USD",
