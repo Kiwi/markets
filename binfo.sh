@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.9  jan/2021  by mountaineerbr
+# v0.9.1  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -1143,6 +1143,9 @@ else
 			ok=1
 			utxf
 		fi
+
+		#try not to flood the server
+		sleep 0.8
 	done
 
 	#automatic opt selection
@@ -1185,15 +1188,18 @@ else
 			fi
 		done
 
-		#if no option or argument given
-		#default function
-		#summary information of latest block
-		if ((ok==0))
-		then
-			latestf
-			#printf 'No option given. Stop.\n' 1>&2
-			#exit 1
-		fi
+		#try not to flood the server
+		sleep 0.8
+	fi
+
+	#if no option or argument given
+	#default function
+	#summary information of latest block
+	if ((ok==0))
+	then
+		latestf
+		#printf 'No option given. Stop.\n' 1>&2
+		#exit 1
 	fi
 fi
 
