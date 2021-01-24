@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.8.36  jan/2021  by mountaineerbr
+# v0.9  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -27,43 +27,39 @@ HELP="NAME
 
 SYNOPSIS
 	$ binfo.sh  HASH
-	$ binfo.sh  [-aass] ADDR_HASH 
-	$ binfo.sh  [-b [-x] [BLK_HASH | ID]]  [-n BLK_HEIGHT] 
-	$ binfo.sh  -tt [[-x] TX_HASH | ID]
+	$ binfo.sh  [-aass] ADDR_HASH..
+	$ binfo.sh  -b [-x] [BLK_HASH..|ID..]
+	$ binfo.sh  -n BLK_HEIGHT.. 
+	$ binfo.sh  [-tt] [-x] [TX_HASH..|ID..]
 	$ binfo.sh  [-ehiilruv]
 
 
-	Fetch information of Bitcoin blocks, addresses and transactions from
-	<blockchain.info> public APIs. It is intended to be used as a simple
-	Bitcoin blockchain explorer. Some options accept multiple arguments,
-	for example requesting multiple addresses balances at once when using
-	blockchain.info options. Most options only accept one argument (block,
-	address, transaction hash, etc) at a time. If the server declines
-	data for multiple addresses or other requests at once, try one
-	at a time.
+	Fetch information of Bitcoin blocks, addresses and transactions
+	from <blockchain.info> public APIs. It is intended to be used as
+	a simple Bitcoin blockchain explorer. Most options accept multiple
+	arguments. If the server declines data for multiple addresses or
+	other requests at once, try one at a time.
 
-	Newer versions of this script should choose appropriate options depen-
-	ding on user input automatically. However, in some cases it is best to
-	set them explicitly. General references for specific options are pres-
-	ented in section USAGE EXAMPLES.
+	This script should choose appropriate options depending on user
+	input automatically. However, in some cases it is best to set
+	them explicitly. See USAGE EXAMPLES.
 
-	<Blockchain.info> and <blockchair.com> may provide an internal index
-	number (ID) of blocks, transactions, etc to use instead of their re-
-	spective hashes. Some options also accept multiple types of inputs and
-	are specified in the OPTIONS section.
+	<Blockchain.info> and <blockchair.com> may provide an internal
+	index number (ID) of blocks, transactions, etc to use instead of
+	their respective hashes.
 
-	<Blockchain.info> still does not support segwit (bech32) addresses. On
-	the other hand, <blockchair.com> supports segwit and other types of
-	addresses and therefore <blockchair.com> api was also implemented in
-	this programme to ammend those instances.
+	<Blockchain.info> still does not support segwit (bech32) addresses.
+	On the other hand, <blockchair.com> supports segwit and other
+	types of addresses and therefore <blockchair.com> api was also
+	implemented in this programme to ammend those instances.
 
-	The new block notification option '-e' websocket connection is ex-
-	pected to drop occasionally. Automatic reconnection will be tried in
-	a loop. After a block is mined, it takes some time, usually about one
+	The new block notification option -e websocket connection is ex-
+	pected to drop occasionally, so we try to auto reconnect in a loop.
+	After a block is mined, it takes some time, usually about one
 	minute, until the server sends out a new notification through the
-	web socket stream. If the notification arrival time is behind the time
-	at which the block was mined, the user computer has got the wrong
-	hardware clock time set.
+	web socket stream. If the notification arrival time is behind the
+	time at which the block was mined, the user computer has got the
+	wrong hardware clock time set.
 
 
 BLOCKCHAIN STRUCTURE
@@ -74,12 +70,12 @@ BLOCKCHAIN STRUCTURE
 		(2)  Address
 		(3)  Transaction
 
-	If you do not have a specific address or transaction to lookup, try
-	fetching the latest block hash and transaction info (option '-l').
-	Note that the latest block takes a while to process, so you only get
-	transaction IDs at first. For thorough block information, use option
-	'-b' with the block hash. You can also inspect a block with option
-	'-n' and its height number.
+	If you do not have a specific address or transaction to lookup,
+	try fetching the latest block hash and transaction info (option
+	-l). Note that the latest block takes a while to process, so you
+	only get transaction IDs at first. For thorough block information,
+	use option -b with the block hash. You can also inspect a block
+	with option -n and its height number.
 
 
 ABBREVIATIONS
@@ -122,31 +118,35 @@ ABBREVIATIONS
 
 
 API LIMITS
-	It is difficult to find the true limitations of each api. Sometimes,
-	the information is not updated or is only partial.
+	It is difficult to find the true limitations of each api. Some-
+	times, the information is not updated or is only partial.
 
-	There are two major types of limits to deal with in this script. The 
-	first one is the api request limit and the second one is the response
-	limit.
+	There are two major types of limits to deal with in this script.
+	The first one is the api request limit and the second one is the
+	response limit.
 
-	Response limits were maxed out where possible. However do not expect
-	to get all transactions for a given address, for example. Dependending
-	on the api, usually you will get about the most recent 50-100 results.
+	Response limits were maxed out where possible. However do not
+	expect to get all transactions for a given address, for example.
+	Dependending on the api, usually you will get about the most
+	recent 50-100 results.
 
-	There are some possibilities to use loops and offsets to retrieve more 
-	results in some cases, but i do not have time to implement these so
-	do expect to get only the first page of results for each call.
+	There are some possibilities to use loops and offsets to retrieve
+	more  results in some cases, but i do not have time to implement
+	these so do expect to get only the first page of results for each
+	call.
 
 
 	Blockchain.info
 
-	Very recently, an api key was granted by blockchain.com for this script
-	to work with higher request limits. It would be implemented, however
-	blockchain.info offers no intruction as to how to implement an api key
-	call, and some tips i could find over internet forms do not seem to
-	work, so i guess we will have to bear the request limits..
+	Very recently, an api key was granted by blockchain.com for this
+	script to work with higher request limits. It would be implemented,
+	however blockchain.info offers no intruction as to how to implement
+	an api key call, and some tips i could find over internet forms
+	do not seem to work, so i guess we will have to bear the request
+	limits..
 	
-		\"Please limit your queries to a maximum of 1 every 10 seconds\"
+		\"Please limit your queries to a maximum
+		 of 1 every 10 seconds\"
 
 	<https://www.blockchain.com/api/blockchain_api>
 	<https://www.blockchain.com/api/q>
@@ -154,20 +154,21 @@ API LIMITS
 
 	Blockchair.com
 	
-		\"For personal or non-comercial use, 1440 requests a day and
-		30 requests a minute.\"
+		\"For personal or non-comercial use, 1440 requests a day
+		 and 30 requests a minute.\"
 	
 	<https://blockchair.com/api/docs>
 
 
 WARRANTY
-	Licensed under the GNU Public License v3 or better and is distributed
-	without support or bug corrections.
+	Licensed under the GNU Public License v3 or better and is
+	distributed without support or bug corrections.
 
-	This script needs the latest Bash, cURL or Wget, Gzip, JQ, Websocat
-	and GNU Coreutils packages to work properly.
+	This script needs the latest Bash, cURL or Wget, Gzip, JQ,
+	Websocat and GNU Coreutils packages to work properly.
 
-	If you found this script useful, please consider sending me a nickle.
+	If you found this script useful, please consider sending me
+	a nickle.
 		=)
 
 		bc1qlxm5dfjl58whg6tvtszg5pfna9mn2cr2nulnjr
@@ -184,11 +185,8 @@ BUGS
 
 
 USAGE EXAMPLES
-
-	Newer versions of the script will try to match user input (a transac-
-	tion, address or block hash or block height) automatically with the
-	correct option.  General references for specific options are presented
-	below.
+	The script will try to set an option automatically based on user
+	input. General references for some options are presented below.
 
 
 	(1) Get latest block Hash and Transaction indexes:
@@ -235,6 +233,7 @@ USAGE EXAMPLES
 OPTIONS
     Options that can be passed twice use Blockchair's API, all others
     use Blockchain.com APIs.
+
     Miscellaneous
       -e 	Socket stream for new block notification.
       -h 	Show this help.
@@ -242,25 +241,28 @@ OPTIONS
       -r 	Get a table with bitcoin hash rate history.
       -u 	Unconfirmed transactions (mempool) from Blockchair.
       -v 	Print script version.
-      -x 	Get hex (of a block or transaction), use with
-      		options '-b' or '-t'; blockchain.info api only.
+      -x 	Get only hex, use with -bt ; blockchain.info api only.
+
     Blockhain
       -i, -ii 	Bitcoin blockchain info (24H rolling ticker).
+    
     Block
-      -b 	Block information by hash or ID, if empty 
-      		fetches latest block.
+      -b 	Block information by hash or ID, if empty fetches
+      		latest block.
       -l 	Latest block summary information.
       -n 	Block information by height.
+    
     Address
-      -a  	Addresses information; for a single address: base58 or hash160;
-      		response limit=50 txs; for multiple addresses: base58 or xpub;
-		response limit=100 txs.
+      -a  	Addresses information; for a single address: base58 or
+      		hash160; response limit=50 txs; for multiple addresses:
+		base58 or xpub; response limit=100 txs.
       -aa 	Address information, response limit=10000 txs.
-      -s	Summary address information; for multiple addresses: base58 
-      		or xpub.
+      -s	Summary address information; for multiple addresses:
+      		base58 or xpub.
       -ss	Summary address information.
-      -p 	List unspent tx outputs from addresses; for multiple addresses:
-      		base58 or xpub; response limit=1000 txs.
+      -p 	List unspent tx outputs from addresses; for multiple
+      		addresses: base58 or xpub; response limit=1000 txs.
+    
     Transaction
       -t, -tt	Transaction information by hash or ID."
 
@@ -864,7 +866,7 @@ rtxf() {
 		"  To___:",
 		(.out[]|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")"),
 		"",
-		"--------",
+		"",
 		"TxHash_: \(.hash)",
 		"BlkHgt_: \(.block_height)\t\t\tVersion: \(.ver)",
 		"Tx_Size: \(.size) bytes\t\tWeight_: \(.weight)",
@@ -901,7 +903,7 @@ chairrtxf() {
 		),
 		(.data[].transaction|
 			"",
-			"--------",
+			"",
 			"Hash____: \(.hash)",
 			"TxIndex_: \(.id)\tVersion: \(.version)",
 			"Block_ID: \(.block_id)\tCDD____: \(.cdd_total) \(if .is_coinbase == true then "(Coinbase)" else "" end)",
@@ -1100,14 +1102,6 @@ then
 elif [[ -n "${LATESTOPT}" ]]
 then
 	latestf
-#block by height
-elif [[ -n "${HOPT}" ]]
-then
-	hblockf "${1}"
-#block by hash
-elif [[ -n "${RAWOPT}" ]]
-then
-	rblockf "${1}"
 #addresses
 elif [[ "${ADDOPT}" = info ]]
 then
@@ -1116,58 +1110,90 @@ then
 elif [[ -n "${UTXOPT}" ]]
 then
 	utxaddf "${@}"
-elif [[ "${ADDOPT}" = chair ]]
-then
-	chairaddf "${1}"
-#transactions
-elif [[ "${TXOPT}" = info ]]
-then
-	rtxf "${1}"
-elif [[ "${TXOPT}" = chair ]]
-then
-	chairrtxf "${@}"
-#mempool
-elif [[ -n "${MEMOPT}" ]]
-then
-	utxf
-#if no option was given by the user, try to identify
+#call opt functions
 else
-	#is legacy addr?
-	if grep -qE -e '^[13][a-km-zA-HJ-NP-Z1-9]{25,34}' <<<"${1}"
-	then
-		#addr
-		raddf "${@}"
-	#is bech32 addr?
-	elif grep -qE -e '^bc(0([ac-hj-np-z02-9]{39}|[ac-hj-np-z02-9]{59})|1[ac-hj-np-z02-9]{8,87})' <<<"${1}"
-	then
-		#addr
-		chairaddf "${1}"
-	#is tx or block?
-	elif grep -qE '^[a-fA-F0-9]{64}' <<<"${1}"
-	then
-		#is block?
-		if grep -qE '^[0]{8}[a-fA-F0-9]{56}' <<<"${1}"
-		then
-			#block by hash
-			rblockf "${1}"
-		else
-			#tx hash
-			rtxf "${1}"
-		fi
-	elif [[ "${1}" =~ ^[0-9]+$ ]] && ((${1}<1000000)) 2>/dev/null
-	then
+	for arg in "$@"
+	do
 		#block by height
-		hblockf "${1}"
-	else
+		if [[ -n "${HOPT}" ]]
+		then
+			ok=1
+			hblockf "${1}"
+		#block by hash
+		elif [[ -n "${RAWOPT}" ]]
+		then
+			ok=1
+			rblockf "${1}"
+		elif [[ "${ADDOPT}" = chair ]]
+		then
+			ok=1
+			chairaddf "${1}"
+		#transactions
+		elif [[ "${TXOPT}" = info ]]
+		then
+			ok=1
+			rtxf "${1}"
+		elif [[ "${TXOPT}" = chair ]]
+		then
+			ok=1
+			chairrtxf "$1"
+		#mempool
+		elif [[ -n "${MEMOPT}" ]]
+		then
+			ok=1
+			utxf
+		fi
+	done
+
+	#automatic opt selection
+	if ((ok==0))
+	then
+		#other functions
+		#loop through arguments
+		for arg in "$@"
+		do
+			#is legacy addr?
+			if [[ "$arg" =~ ^[13][a-km-zA-HJ-NP-Z1-9]{25,34} ]]
+			then
+				ok=1
+				#addr
+				raddf "$arg"
+			#is bech32 addr?
+			elif [[ "$arg" =~ ^bc(0([ac-hj-np-z02-9]{39}|[ac-hj-np-z02-9]{59})|1[ac-hj-np-z02-9]{8,87}) ]]
+			then
+				ok=1
+				#addr
+				chairaddf "$arg"
+			#is tx or block?
+			elif [[ "$arg"  =~ ^[a-fA-F0-9]{64} ]]
+			then
+				ok=1
+				#is block?
+				if [[ "$arg" =~ ^[0]{8}[a-fA-F0-9]{56} ]]
+				then
+					#block by hash
+					rblockf "$arg"
+				else
+					#tx hash
+					rtxf "$arg"
+				fi
+			elif [[ "$arg" =~ ^[0-9]+$ ]] && ((arg<1000000)) 2>/dev/null
+			then
+				ok=1
+				#block by height
+				hblockf "$arg"
+			fi
+		done
+
 		#if no option or argument given
 		#default function
 		#summary information of latest block
-		#-l
-		latestf
-		
-
-		#printf 'No option given. Stop.\n' 1>&2
-		#exit 1
+		if ((ok==0))
+		then
+			latestf
+			#printf 'No option given. Stop.\n' 1>&2
+			#exit 1
+		fi
 	fi
 fi
 
