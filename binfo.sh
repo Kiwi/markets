@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.9.1  jan/2021  by mountaineerbr
+# v0.9.2  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -1186,10 +1186,10 @@ else
 				#block by height
 				hblockf "$arg"
 			fi
-		done
 
-		#try not to flood the server
-		sleep 0.8
+			#try not to flood the server
+			sleep 0.8
+		done
 	fi
 
 	#if no option or argument given
