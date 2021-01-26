@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.9.14  jan/2021  by mountaineerbr
+# v0.9.15  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -1208,8 +1208,6 @@ else
 	if (($#==0)) || ((notok))
 	then
 		latestf
-		#get exit code
-		RET+=($?)
 	fi
 fi
 #get exit code
