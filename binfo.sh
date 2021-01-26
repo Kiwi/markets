@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.9.11  jan/2021  by mountaineerbr
+# v0.9.13  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -840,29 +840,28 @@ rtxf() {
 	#print json?
 	if [[ -n  "$PJSON" ]]; then
 		#only if from tx opts explicitly
-		printf 'JSON from the tx function\n' 1>&2
+		echo 'JSON from the tx function' >&2
 		echo "$RAWTX"
+		unset RAWTX
 		return
-	fi
 
 	#print hex opt
-	if [[ -n "$HEXOPT" ]]; then
+	elif [[ -n "$HEXOPT" ]]; then
 		echo "$RAWTX"
+		unset RAWTX
 		return
-	fi
-
 	#test for no tx info received, maybe there is no tx done at an address
-	if ! jq -e '.hash' <<<"$RAWTX" 1>/dev/null 2>&1; then
+	elif ! jq -e '.hash' <<<"$RAWTX" 1>/dev/null 2>&1; then
 		echo "Err: transaction not found -- $1" >&2
 		
 		unset RAWTX
 		return 1
-	else
-		printf 'Transaction Info           \n' #whitespaces to rm previous loading message
 	fi
 
-	jq -r '"",
+	#process
+	jq -r '"                                 ",
 		"--------",
+		"Transaction Details",
 		"Transaction vectors",
 		"  From_:",
 		(.inputs[].prev_out|"    \(.addr)  \(if .value == null then "??" else (.value/100000000) end) BTC  \(if .spent == true then "SPENT" else "UNSPENT" end)  \(.addr_tag // "")"),
@@ -896,9 +895,11 @@ chairrtxf() {
 		echo "Err: <blockchair.com> -- transaction not found -- $1" >&2
 		return 1
 	fi
-	printf 'Transaction Info (Blockchair)\n'
+
+	#process
 	jq -r '"",
 		"--------",
+		"Transaction Details (Blockchair)        ",
 		"Transaction vectors",
 		"  From:",
 		(.data[].inputs[]|
