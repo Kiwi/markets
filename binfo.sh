@@ -1,6 +1,6 @@
 #!/bin/bash
 # binfo.sh -- bitcoin blockchain explorer for bash
-# v0.9.13  jan/2021  by mountaineerbr
+# v0.9.14  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -842,14 +842,15 @@ rtxf() {
 		#only if from tx opts explicitly
 		echo 'JSON from the tx function' >&2
 		echo "$RAWTX"
-		unset RAWTX
-		return
 
+		unset RAWTX
+		return 0
 	#print hex opt
 	elif [[ -n "$HEXOPT" ]]; then
 		echo "$RAWTX"
+
 		unset RAWTX
-		return
+		return 0
 	#test for no tx info received, maybe there is no tx done at an address
 	elif ! jq -e '.hash' <<<"$RAWTX" 1>/dev/null 2>&1; then
 		echo "Err: transaction not found -- $1" >&2
