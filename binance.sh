@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.15  jan/2021  by mountaineerbr
+# v0.10.16  jan/2021  by mountaineerbr
 
 #defaults
 
@@ -31,9 +31,9 @@ HELP="NAME
 
 SYNOPSIS
 	$SN [-NUM] [-jou] [AMOUNT] MARKET
-	$SN [-NUM] [-aciorstwz] [-ju] MARKET
+	$SN [-NUM] [-aciorstwzX] [-ju] MARKET
 	$SN [-bbt] [-ju] MARKET
-	$SN [-hlvX]
+	$SN [-hlv]
 
 
 	Get the latest data from Binance markets from public APIs. This 
@@ -47,8 +47,8 @@ SYNOPSIS
 	rate of those markets listed is also supported, i.e both XRP/BTC
 	and BTC/XRP rates are supported.  
 
-	Choose which Binance server to get data from. Option -j to use 
-	<binance.je> Jersey, -u to use <binance.us> US, otherwise de-
+	Choose which Binance server to get data from. Option -j to set
+	<binance.je> Jersey, -u to set <binance.us> US, otherwise de-
 	faults to <binance.com> from Malta.
 
 	If no market is given, defaults to BTC/USDT. If option -j is
@@ -61,15 +61,16 @@ SYNOPSIS
 
 	Option -o sets thousands separator in printing results.
 
-	To keep trying to reconnect websocket automatically on error or
-	EOF, use option -a together with websocket options. Beware this
-	option may cause high CPU usage until reconnection is achieved!
+	To keep trying to reconnect to the websocket automatically on
+	error or EOF, set option -a (only if using Websocat package).
+	Beware this option may cause high CPU usage until reconnection
+	is achieved!
 
-	Some functions use curl/wget to fetch data from REST APIs and
-	some use websocat (defaults) or wscat packages to fetch data from
-	websockets. Set -X if you prefer using wscat instead of websocat.
+	Some functions use Curl/Wget to fetch data from REST APIs and
+	some use Websocat (defaults) or Wscat packages to fetch data from
+	websockets. Set -X if you prefer using Wscat instead of Websocat.
 
-	Option -r uses curl or wget to fetch data instead of opening
+	Option -r sets Curl or Wget to fetch data instead of opening
 	a websocket, defaults sleep time (seconds) between consecutive
 	calls is $RSLEEP .
 
@@ -109,61 +110,63 @@ BUGS
 
 
 USAGE EXAMPLES
-		(1) 	One Bitcoin in US Dollar from <binance.com> US:
-			
-			$ $SN -u btc usd
-
-
-		(2)     Half a Dash in Binance Coin, using a math
-			expression in AMOUNT:
-			
-			$ $SN '(3*0.15)+.05' dash bnb 
-
-
-		(3)     Price of one XRP in USDC, four decimal plates:
-			
-			$ $SN -4 xrp usdc 
-
+	(1) 	One Bitcoin in US Dollar from <binance.com> US:
 		
-		(4)     Price stream of BTCUSDT, group thousands; print
-			only one decimal plate and add thousand separator:
-			
-			$ $SN -s -o -1 btc usdt
-
-			$ $SN -so1 btc usdt
+		$ $SN -u btc usd
 
 
-		(5) 	Order book depth view of ETHUSDT (20 levels on
-			each side), data from <binance.je> Jersey:
-
-			$ $SN -bbj eth usdt
-
-
-		(6)     Get rates for all Bitcoin markets; use grep to
-			search for specific markets:
-			
-			$ $SN -l  |  grep BTC
+	(2)     Half a Dash in Binance Coin, using a math
+		expression in AMOUNT:
+		
+		$ $SN '(3*0.15)+.05' dash bnb 
 
 
-			OBS: \"grep '^BTC'\" matches markets starting
-			with BTCxxx; \"grep 'BTC$'\" matches markets
-			ending  with xxxBTC.
+	(3)     Price of one XRP in USDC, four decimal plates:
+		
+		$ $SN -4 xrp usdc 
+
+	
+	(4)     Price stream of BTCUSDT, group thousands; print
+		only one decimal plate and add thousand separator:
+		
+		$ $SN -s -o -1 btc usdt
+
+		$ $SN -so1 btc usdt
+
+
+	(5) 	Order book depth view of ETHUSDT (20 levels on
+		each side), data from <binance.je> Jersey:
+
+		$ $SN -bbj eth usdt
+
+
+	(6)     Get rates for all Bitcoin markets; run grep to
+		search for specific markets:
+		
+		$ $SN -l  |  grep BTC
+
+
+		OBS: \"grep '^BTC'\" matches markets starting
+		with BTCxxx; \"grep 'BTC$'\" matches markets
+		ending  with xxxBTC.
 
 
 OPTIONS
 	Formatting
 	-NUM 	   Decimal plate setting (scale).
 	-o 	   Add a thousands separator to printed results.
+
 	Miscellaneous
-	-a 	   Autoreconnect in case of temporary errors for websocket
-		   connection; defaults=unset.
+	-a 	   Autoreconnect in case of temporary errors, only when
+		   using Websocat package; defaults=unset.
 	-d 	   Print raw data from API, for debugging.
 	-h 	   Show this help.
-	-j 	   Use <binance.je> server; defaults=<binance.com>.
-	-r 	   Use curl/wget instead of websocket with options -swi .
-	-u 	   Use <binance.us> server; defaults=<binance.com>.
+	-j 	   Set <binance.je> server; defaults=<binance.com>.
+	-r 	   Set Curl/Wget instead of websocket with options -swi .
+	-u 	   Set <binance.us> server; defaults=<binance.com>.
 	-v 	   Print script version.
-	-X 	   Use wscat instead of websocat package for websockets.
+	-X 	   Set Wscat instead of Websocat package for websockets.
+	
 	Functions
 	-b  [LEVELS] MARKET
 		   Order book depth; valid limits 5, 10 and 20; defaults=20.
