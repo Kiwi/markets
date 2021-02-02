@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.18  feb/2021  by mountaineerbr
+# v0.10.19  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -30,7 +30,7 @@ HELP="NAME
 
 
 SYNOPSIS
-	$SN [-NUM] [-jou] [AMOUNT] MARKET
+	$SN [-NUM] [-jouv] [AMOUNT] MARKET
 	$SN [-NUM] [-aciorstwzX] [-ju] MARKET
 	$SN [-bbt] [-ju] MARKET
 	$SN [-hlv]
@@ -164,7 +164,8 @@ OPTIONS
 	-j 	   Set <binance.je> server; defaults=<binance.com>.
 	-r 	   Set Curl/Wget instead of websocket with options -swi .
 	-u 	   Set <binance.us> server; defaults=<binance.com>.
-	-v 	   Print script version.
+	-V 	   Print script version.
+	-v 	   Print market pair.
 	-X 	   Set Wscat instead of Websocat package for websockets.
 	
 	Functions
@@ -190,13 +191,13 @@ OPTIONS
 #error check
 errf() {
 	#test for error signals
-	if grep -iq -e 'err' -e 'code' <<< "${JSON}"
+	if grep -iq -e 'err' -e 'code' <<< "$JSON"
 	then
 		#set log file
 		LOGF="/tmp/binance_err.log$( date +%s )"
 		
 		#print json and log, too
-		echo "${JSON}" | tee "$LOGF" >&2
+		echo "$JSON" | tee "$LOGF" >&2
 
 		echo "$SN: err detected in json" >&2
 		echo "$SN: log file at $LOGF" >&2
@@ -210,7 +211,7 @@ colf() {
 	#check if given limit is valid - max 1000
 	if (( $1 < 2 )) || (( $1 > 1000 ))
 	then
-		set -- 250 "${2}" "${3}"
+		set -- 250 "$2" "$3"
 	fi
 	 
 	#set addr
@@ -234,7 +235,7 @@ colf() {
 		errf
 
 		#process data
-		jq -r '.[] | .p' <<< "${JSON}" |
+		jq -r '.[] | .p' <<< "$JSON" |
 			awk '{ printf "'${FSTR}'\n", $0 }' |
 			column 
 
@@ -257,7 +258,7 @@ infof() {
 		fi
 
 		#heading
-		printf -- 'Rate, quantity, quote quantity and time (%s)\n' "${2}${3}"
+		printf -- 'Rate, quantity, quote quantity and time (%s)\n' "$2$3"
 		
 		#print data in one column and update regularly
 		while true; do
@@ -268,25 +269,25 @@ infof() {
 			errf
 			
 			#process data
-			RATE="$(jq -r '.[] | .price' <<< "${JSON}")"
-			QT="$(jq -r '.[] | .qty' <<< "${JSON}")"
-			QQT="$(jq -r '.[] | .quoteQty' <<< "${JSON}")"
-			TS="$(jq -r '.[] | .time | tostring | .[0:10]' <<< "${JSON}" )"
-			DATE="$(date -d@"${TS}" '+%T%Z' )"
+			RATE="$(jq -r '.[] | .price' <<< "$JSON")"
+			QT="$(jq -r '.[] | .qty' <<< "$JSON")"
+			QQT="$(jq -r '.[] | .quoteQty' <<< "$JSON")"
+			TS="$(jq -r '.[] | .time | tostring | .[0:10]' <<< "$JSON" )"
+			DATE="$(date -d@"$TS" '+%T%Z' )"
 			
 			#print
-			printf "\nP: ${FSTR}\tQ: %s\tPQ: %'f \t%s" "${RATE}" "${QT}" "$QQT" "${DATE}" 
+			printf "\nP: ${FSTR}\tQ: %s\tPQ: %'f \t%s" "$RATE" "$QT" "$QQT" "$DATE" 
 
 			sleep "$RSLEEP"
 		done
 		exit 0
 	}
-	(( CURLOPT )) && curlmode "${@}"
+	(( CURLOPT )) && curlmode "$@"
 
 	#websocat mode
 
 	#set addr
-	ADDR="${WSSADD}${2,,}${3,,}@aggTrade" 
+	ADDR="$WSSADD${2,,}${3,,}@aggTrade" 
 
 	#print raw data for debug?
 	if (( DOPT ))
@@ -328,7 +329,7 @@ socketf() {
 			JSON="$( "${YOURAPP[@]}" "$ADDR" )"
 	 		errf
 
-			jq -r '.[] | .p' <<< "${JSON}" | 
+			jq -r '.[] | .p' <<< "$JSON" | 
 				awk '{ printf "\n'${FSTR}'", $1 }' |
 				"${COLORC[@]}"
 
@@ -336,12 +337,12 @@ socketf() {
 		done
 		exit 0
 		}
-	(( CURLOPT )) && curlmode "${@}"
+	(( CURLOPT )) && curlmode "$@"
 	
 	#websocat Mode
 
 	#set addr
-	ADDR="${WSSADD}${2,,}${3,,}@aggTrade" 
+	ADDR="$WSSADD${2,,}${3,,}@aggTrade" 
 
 
 	#print raw data for debug?
@@ -369,15 +370,15 @@ socketf() {
 #-b depth view of order book
 bookdf() {
 	#test if user set depth limit
-	if [[ ! "${1}" =~ ^(5|10|20)$ ]]
+	if [[ ! "$1" =~ ^(5|10|20)$ ]]
 	then
-		set -- 20 "${2}" "${3}"
-		(( ${1} - 1 )) || echo -e "$SN: warning -- invalid limit\n\n" >&2
+		set -- 20 "$2" "$3"
+		(( $1 - 1 )) || echo -e "$SN: warning -- invalid limit\n\n" >&2
 		sleep 1
 	fi
 
 	#set addr
-	ADDR="${WSSADD}${2,,}${3,,}@depth${1}@100ms" 
+	ADDR="$WSSADD${2,,}${3,,}@depth${1}@100ms" 
 	
 	#print raw data for debug?
 	if (( DOPT ))
@@ -393,7 +394,7 @@ bookdf() {
 	
 	#open websocket and process data
 	"${WEBSOCATC[@]}" "$ADDR" |
-	jq -r --arg FCUR "${2}" --arg TCUR "${3}" '
+	jq -r --arg FCUR "$2" --arg TCUR "$3" '
 		"\nORDER BOOK \($FCUR)\($TCUR)",
 		"",
 		(.asks|[.[range(1;length)]]|reverse[]|
@@ -416,7 +417,7 @@ booktf() {
 		valid='5|10|20|50|100|500|1000|5000|10000'
 		[[ ! "$1" =~ ^($valid)$ ]]
 	then
-		set -- $deflimit "${2}" "${3}"
+		set -- $deflimit "$2" "$3"
 		echo "$SN: valid limits -- ${valid//|/ }" >&2
 		echo "$SN: warning -- limit level set to $deflimit" >&2
 	fi
@@ -440,7 +441,7 @@ booktf() {
 	
 	#process data
 	#bid levels and total size
-	if ! BIDS=($(jq -er '.bids[]|.[1]' <<<"${BOOK}"))
+	if ! BIDS=($(jq -er '.bids[]|.[1]' <<<"$BOOK"))
 	then
 		#if there was error, check if there is a message
 		jq -r .msg//empty <<<"$BOOK"
@@ -448,14 +449,14 @@ booktf() {
 	fi
 	BIDSL="${#BIDS[@]}"
 	BIDST="$(bc <<<"${BIDS[*]/%/+}0")"
-	BIDSQUOTE=($(jq -r '.bids[]|((.[0]|tonumber)*(.[1]|tonumber))' <<<"${BOOK}")) 
+	BIDSQUOTE=($(jq -r '.bids[]|((.[0]|tonumber)*(.[1]|tonumber))' <<<"$BOOK")) 
 	BIDSQUOTET="$(bc <<<"scale=2;(${BIDSQUOTE[*]/%/+}0)/1")"
 	
 	#ask levels and total size
-	ASKS=($(jq -r '.asks[]|.[1]' <<<"${BOOK}"))
+	ASKS=($(jq -r '.asks[]|.[1]' <<<"$BOOK"))
 	ASKSL="${#ASKS[@]}"
 	ASKST="$(bc <<<"${ASKS[*]/%/+}0")"
-	ASKSQUOTE=($(jq -r '.asks[]|((.[0]|tonumber)*(.[1]|tonumber))' <<<"${BOOK}")) 
+	ASKSQUOTE=($(jq -r '.asks[]|((.[0]|tonumber)*(.[1]|tonumber))' <<<"$BOOK")) 
 	ASKSQUOTET="$(bc <<<"scale=2;(${ASKSQUOTE[*]/%/+}0)/1")"
 	
 	#total levels and total sizes
@@ -467,7 +468,7 @@ booktf() {
 	BARATE="$(bc <<<"scale=4;${BIDST}/${ASKST}")"
 	
 	#print stats
-	#ratio  #printf 'BID/ASK  %s\n\n' "${BARATE}"
+	#ratio  #printf 'BID/ASK  %s\n\n' "$BARATE"
 	
 	#table
 	column -ts= -N"${2}${3},SIZE,QUOTESIZE,LEVELS" -TSIZE <<-!
@@ -481,7 +482,7 @@ booktf() {
 #-t 24-h ticker
 tickerf() {
 	#set addr
-	ADDR="${WSSADD}${2,,}${3,,}@ticker" 
+	ADDR="$WSSADD${2,,}${3,,}@ticker" 
 	
 	#print raw data for debug?
 	if (( DOPT ))
@@ -535,23 +536,23 @@ lcoinsf() {
 	LDATA="$( "${YOURAPP[@]}" "$ADDR" )"
 	
 	#process data
-	jq -r '.[] | "\(.symbol)\t\(.price)"' <<< "${LDATA}" | 
+	jq -r '.[] | "\(.symbol)\t\(.price)"' <<< "$LDATA" | 
 		sort | column -s$'\t' -et -N 'Market,Rate'
 	
 	#stats
-	printf 'Markets: %s\n' "$(jq -r '.[].symbol' <<< "${LDATA}"| wc -l)"
-	printf '<https://api.binance.%s/api/v3/ticker/price>\n' "${WHICHB}"
+	printf 'Markets: %s\n' "$(jq -r '.[].symbol' <<< "$LDATA"| wc -l)"
+	printf '<https://api.binance.%s/api/v3/ticker/price>\n' "$WHICHB"
 
 	exit
 }
 
 
 #parse options
-while getopts 1234567890abcdofhjlistuwvrXz opt
+while getopts 1234567890abcdofhjlistuvVwrXz opt
 do
 	case $opt in
 		[0-9]) #scale setting
-			SCL="${SCL}${opt}"
+			SCL="$SCL$opt"
 			;;
 		a) 	#autoreconnect
 			AUTOR=( - autoreconnect: )
@@ -564,14 +565,14 @@ do
 			;;
 		d) #print lines that fetch data
 			#printf 'Script cmds to fetch data:\n'
-			#grep -e 'YOURAPP' -e 'WEBSOCATC' <"${0}" | sed -e 's/^[ \t]*//' | sort
+			#grep -e 'YOURAPP' -e 'WEBSOCATC' <"$0" | sed -e 's/^[ \t]*//' | sort
 			DOPT=1
 			;;
 		o|f) #format thousands option
 			THOUSANDOPT="'"
 			;;
 		h) #help
-			echo "${HELP}"
+			echo "$HELP"
 			exit 0
 			;;
 		i) #detailed latest trade information
@@ -596,9 +597,12 @@ do
 		u) #binance us
 			WHICHB='us'
 			;;
-		v) #script version
-			grep -m1 '\# v' "${0}"
+		V) #script version
+			grep -m1 '\# v' "$0"
 			exit 0
+			;;
+		v) #verbose, currently little implemented
+			OPTV=1
 			;;
 		w) #coloured stream of trade prices
 			SOPT=1
@@ -611,7 +615,7 @@ do
 			export TZ=UTC
 			;;
 		\?)
-			#echo "$SN: invalid option -- -${OPTARG}" >&2
+			#echo "$SN: invalid option -- -$OPTARG" >&2
 			exit 1
 			;;
 	esac
@@ -637,8 +641,8 @@ fi
 #set websocket pkg
 #websocat command
 if
-	[[ -n "${IOPT}${SOPT}${BOPT}${TOPT}" ]] &&
-	[[ -z "${CURLOPT}" ]]
+	[[ -n "$IOPT$SOPT$BOPT$TOPT" ]] &&
+	[[ -z "$CURLOPT" ]]
 then
 
 	if ((XOPT==0)) && command -v websocat &>/dev/null
@@ -678,15 +682,15 @@ fi
 
 #arrange arguments
 #if first arg does not have numbers OR isn't a valid bc expression
-if [[ "${1}" != *[0-9]* ]] ||
-	[[ -z "$( bc -l <<< "${1}" 2>/dev/null )" ]]
+if [[ "$1" != *[0-9]* ]] ||
+	[[ -z "$( bc -l <<< "$1" 2>/dev/null )" ]]
 then
 	set -- 1 "${@:1:3}"
 fi
 
 #split pairs such as XRP/BTC, XRP,BTC, XRP-BTC and XRP.BTC
 spliters='\/,.-'
-if [[ "$2$3" =~ ^[${spliters}]+$ ]]
+if [[ "$2" =~ ^[${spliters}]+$ || "$3" =~ ^[${spliters}]+$ ]]
 then
 	echo "$SN: err: bad currency pair -- ${@:2:2}" >&2
 	exit 1
@@ -694,18 +698,12 @@ else
 	#split
 	set -- "$1" ${2/[${spliters}]/ } ${3/[${spliters}]/ } ${4/[${spliters}]/ }
 fi
+unset spliters
 #set all to caps
 set -- "${@^^}"
 
-#copy user input
-#for error message
-USERIN="${@:2:2}"
-
 #set btc as 'from_currency' for market code formation
-if [[ -z ${2} ]]
-then
-	set -- "${1}" BTC
-fi
+[[ -z "$2" ]] && set -- "$1" BTC
 
 #get market symbol list
 #set addr
@@ -723,31 +721,31 @@ MARKETS="$( "${YOURAPP[@]}" "$ADDR" | jq -r '.[].symbol' )"
 
 #check if input is a valid market
 #set to_currency if none given
-if [[ -z "${3}" ]] &&
-	! grep -qi "^${2}$" <<< "${MARKETS}"
+if [[ -z "$3" ]] &&
+	! grep -qi "^${2}$" <<< "$MARKETS"
 then
 	#set default vs currency
-	if [[ "${WHICHB}" = us ]]
+	if [[ "$WHICHB" = us ]]
 	then
-		set -- "${1}" "${2}" USD
-	elif [[ "${WHICHB}" = je ]]
+		set -- "$1" "$2" USD
+	elif [[ "$WHICHB" = je ]]
 	then
-		set -- "${1}" "${2}" EUR
+		set -- "$1" "$2" EUR
 	else
-		set -- "${1}" "${2}" USDT
+		set -- "$1" "$2" USDT
 	fi
 fi 
 
 #test if market is valid
-if ! grep -qi "^${2}${3}$" <<< "${MARKETS}"
+if ! grep -qi "^${2}${3}$" <<< "$MARKETS"
 then
 	#if default option, try to get rate of the reverse market
-	if [[ -z "${IOPT}${SOPT}${BOPT}${BOPT}${TOPT}${COPT}" ]] &&
-		grep -qi "^${3}${2}$" <<< "${MARKETS}"
+	if [[ -z "$IOPT$SOPT$BOPT$BOPT$TOPT$COPT" ]] &&
+		grep -qi "^${3}${2}$" <<< "$MARKETS"
 	then
 		REVMKT=1/
 	else
-		echo "$SN: unsupported market -- ${USERIN:-"$2 $3"}" >&2
+		echo "$SN: unsupported market -- ${@:2:2}" >&2
 		if (( ${#2} > 4 ))
 		then
 			echo "$SN: try to add a space between market symbols" >&2
@@ -761,33 +759,36 @@ fi
 #detailed trade info
 if (( IOPT ))
 then
-	infof "${@}"
+	infof "$@"
 #price websocket stream
 elif (( SOPT ))
 then
-	socketf "${@}"
+	socketf "$@"
 #order book depth opts
 #order book depth 10
 elif (( BOPT == 1 ))
 then
-	bookdf "${@}"
+	bookdf "$@"
 #order book total sizes
 elif (( BOPT == 2 ))
 then
-	booktf "${@}"
+	booktf "$@"
 #24-h ticker
 elif (( TOPT ))
 then
-	tickerf "${@}"
+	tickerf "$@"
 #price in columns
 elif (( COPT ))
 then
-	colf "${@}"
+	colf "$@"
 #default function -- market rates
 else
+	#verbose
+	((OPTV)) && echo Market: "${@:2:2}"
+
 	#set market
 	[[ -z "$REVMKT" ]] && MKT="$2$3" || MKT="$3$2"
-	
+
 	#set addr
 	ADDR="https://api.binance.${WHICHB}/api/v3/ticker/price?symbol=$MKT" 
 
@@ -803,7 +804,7 @@ else
 	fi
 
 	BRATE=$( jq -r .price <<<"$DATA" )
-	R="$( bc <<< "scale=16 ; ( ${1} ) * ( $REVMKT ${BRATE} )" )"
+	R="$( bc <<< "scale=16 ; ( $1 ) * ( $REVMKT $BRATE )" )"
 	
 	#calc and printf results
 	printf "${FSTR}\n" "$R"
