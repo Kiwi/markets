@@ -784,7 +784,7 @@ then
 #default function -- market rates
 else
 	#verbose
-	((OPTV)) && echo Input: "${@:1:2}"
+	((OPTV)) && echo Input: "${@:1:3}"
 
 	#set market
 	[[ -z "$REVMKT" ]] && MKT="$2$3" || MKT="$3$2"
