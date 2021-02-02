@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.22  feb/2021  by mountaineerbr
+# v0.10.23  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -784,7 +784,7 @@ then
 #default function -- market rates
 else
 	#verbose
-	((OPTV)) && echo Market: "${@:2:2}"
+	((OPTV)) && echo Input: "${@:1:2}"
 
 	#set market
 	[[ -z "$REVMKT" ]] && MKT="$2$3" || MKT="$3$2"
