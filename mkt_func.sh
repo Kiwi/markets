@@ -230,12 +230,12 @@ kitco()
 	local kitcohelp colconf nopt c
 	#help
 	kitcohelp='usage: kitco [CURRENCY] [UNIT]   #convert opts
-	usage: kitco -n NUM              #kitco news
-	usage: kitco -h                  #help page
-	currs: USD, AUD, CAD, EUR, GBP, JPY, CHF, CNY,
-	       HKD, BRL, INR, MXN, RUB and ZAR
-	units: ounce, gram, kilo or tola
-	defau: USD ounce'
+usage: kitco -n NUM              #kitco news
+usage: kitco -h                  #help page
+currs: USD, AUD, CAD, EUR, GBP, JPY, CHF, CNY,
+       HKD, BRL, INR, MXN, RUB and ZAR
+units: ounce, gram, kilo or tola
+defts: USD ounce'
 
 	#parse options
 	while getopts hn: c
