@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.23  feb/2021  by mountaineerbr
+# v0.10.24  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -8,7 +8,7 @@
 WHICHB=com
 #com -- Malta
 #us -- US
-#je -- Jersey
+#je -- Jersey (DEPRECATED)
 
 #do not change the following
 #script name
@@ -30,9 +30,9 @@ HELP="NAME
 
 
 SYNOPSIS
-	$SN [-NUM] [-jouv] [AMOUNT] MARKET
-	$SN [-NUM] [-aciorstwzX] [-ju] MARKET
-	$SN [-bbt] [-ju] MARKET
+	$SN [-NUM] [-ouv] [AMOUNT] MARKET
+	$SN [-NUM] [-aciorstwzX] [-u] MARKET
+	$SN [-bbt] [-u] MARKET
 	$SN [-hlV]
 
 
@@ -47,13 +47,12 @@ SYNOPSIS
 	rate of those markets listed is also supported, i.e both XRP/BTC
 	and BTC/XRP rates are supported.  
 
-	Choose which Binance server to get data from. Option -j to set
-	<binance.je> Jersey, -u to set <binance.us> US, otherwise de-
-	faults to <binance.com> from Malta.
+	Choose which Binance server to get data from. Option -u to set
+	<binance.us> US, otherwise defaults to <binance.com> from Malta.
+	Option -j is deprecated (set <binance.je> Jersey server).
 
-	If no market is given, defaults to BTC/USDT. If option -j is
-	set, market defaults to BTC/EUR and if -u is set instead, de-
-	faults to BTC/USD.
+	If no market is given, defaults to BTC/USDT. If option -u is set,
+	defaults to BTC/USD.
 
 	The number of decimal plates is the same received from the server
 	unless explicitly set with option -NUM, in which NUM is a natural
@@ -135,9 +134,9 @@ USAGE EXAMPLES
 
 
 	(5) 	Order book depth view of ETHUSDT (20 levels on
-		each side), data from <binance.je> Jersey:
+		each side), data from <binance.us> US server:
 
-		$ $SN -bbj eth usdt
+		$ $SN -bbu eth usdt
 
 
 	(6)     Get rates for all Bitcoin markets; run grep to
@@ -578,7 +577,8 @@ do
 		i) #detailed latest trade information
 			IOPT=1
 			;;
-		j) #binance jersey
+		j) #binance jersey (DEPRECATED)
+			echo "$SN: warning: deprecation notice -- option -j" >&2
 			WHICHB=je
 			;;
 		l) #list markets
@@ -727,11 +727,14 @@ then
 	#set default vs currency
 	if [[ "$WHICHB" = us ]]
 	then
+		#Binance US
 		set -- "$1" "$2" USD
 	elif [[ "$WHICHB" = je ]]
 	then
+		#Binance Jersey (DEPRECATED)
 		set -- "$1" "$2" EUR
 	else
+		#Binance.com (Malta)
 		set -- "$1" "$2" USDT
 	fi
 fi 
