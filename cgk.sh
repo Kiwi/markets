@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.27  jan/2021  by mountaineerbr
+# v0.13.28  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -201,15 +201,14 @@ USAGE EXAMPLES
 
 OPTIONS
 	Formatting
-	-NUM 	  Shortcut for scale setting, same as -sNUM.
-	-g 	  Use grams instead of troy ounces; only for precious
-		  metals.
-	-o 	  Print thousands separator in result (comma).
+	-NUM 	  Same as -sNUM.
+	-g 	  Use grams instead of troy ounces (precious metals only).
+	-o 	  Print thousands separator in results (comma).
 	-s NUM    Scale setting (decimal plates); defaults=${SCLDEFAULTS}.
 	-x 	  Use satoshis instead of bitcoins (sat = 1/100,000,000 btc).
 	Miscellaneous
 	-b 	  Bank currency function, force convertions between
-		  unofficial currency pairs; automatically set.
+		  unofficially supported currency pairs; defaults=auto.
 	-h 	  Show this help.
 	-j 	  Debug; print raw data, usually json.
 	-v 	  Show this programme version.
@@ -217,20 +216,18 @@ OPTIONS
 	-d CRYPTO
 		  Dominance of cryptos; a single crypto is optional
 		  (amongst top 10 only); also check option -m.
-	-e 	  Exchange information; number of pages to fetch with 
-		  option -p.
+	-e 	  Exchange information; set number of pages with -p.
 	-ee	  Print a list of exchange names and IDs only.
 
 	-H CRYPTO [VS_CURRENCY]
-		  Historical prices (time series); pass twice to print
-		  raw csv data.
+		  Historical prices (time series); twice to print csv.
 	-l 	  List supported currencies.
 	-m [VS_CURRENCY]
 		  Market ticker; a vs_currency may be supplied; check
 		  option -mm; defaults=USD+others.
 	-mm 	  List supported VS_CURRENCIES for options -m and -t .
 	-p NUM	  Pages to retrieve (max 100 results/page); use with
-		  options -e and -tt; defaults=automatic.
+		  options -ett; defaults=auto.
 	-t CRYPTO [VS_CURRENCY]
 		  Simple ticker; general informatioin of CRYPTO.
 	-tt [CRYPTO]
