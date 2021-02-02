@@ -578,7 +578,7 @@ do
 			IOPT=1
 			;;
 		j) #binance jersey (DEPRECATED)
-			echo "$SN: warning: deprecation notice -- option -j" >&2
+			echo "$SN: deprecation notice -- option -j" >&2
 			WHICHB=je
 			;;
 		l) #list markets
