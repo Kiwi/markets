@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.21  feb/2021  by mountaineerbr
+# v0.10.22  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -696,7 +696,7 @@ then
 	exit 1
 else
 	#split
-	set -- "$1" ${2/[${spliters}]/ } ${3/[${spliters}]/ }
+	set -- "$1" ${2//[${spliters}]/ } ${3//[${spliters}]/ }
 fi
 unset spliters
 #set all to caps
