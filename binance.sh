@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.20  feb/2021  by mountaineerbr
+# v0.10.21  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -33,7 +33,7 @@ SYNOPSIS
 	$SN [-NUM] [-jouv] [AMOUNT] MARKET
 	$SN [-NUM] [-aciorstwzX] [-ju] MARKET
 	$SN [-bbt] [-ju] MARKET
-	$SN [-hlv]
+	$SN [-hlV]
 
 
 	Get the latest data from Binance markets from public APIs. This 
