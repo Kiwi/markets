@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.16  jan/2021  by mountaineerbr
+# v0.10.18  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -681,18 +681,25 @@ fi
 if [[ "${1}" != *[0-9]* ]] ||
 	[[ -z "$( bc -l <<< "${1}" 2>/dev/null )" ]]
 then
-	set -- 1 "${@:1:2}"
+	set -- 1 "${@:1:3}"
 fi
 
 #split pairs such as XRP/BTC, XRP,BTC, XRP-BTC and XRP.BTC
-set -- "$1" ${2/[\/,.-]/ } ${3/[\/,.-]/ }
+spliters='\/,.-'
+if [[ "$2$3" =~ ^[${spliters}]+$ ]]
+then
+	echo "$SN: err: bad currency pair -- ${@:2:2}" >&2
+	exit 1
+else
+	#split
+	set -- "$1" ${2/[${spliters}]/ } ${3/[${spliters}]/ } ${4/[${spliters}]/ }
+fi
 #set all to caps
 set -- "${@^^}"
 
 #copy user input
 #for error message
-U=( ${2} ${3} )
-USERIN="${U[@]:0:2}"
+USERIN="${@:2:2}"
 
 #set btc as 'from_currency' for market code formation
 if [[ -z ${2} ]]
