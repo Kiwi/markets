@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.11  feb/2021  by mountaineerbr
+# v0.11.1  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -31,6 +31,7 @@ HELP="NAME
 
 SYNOPSIS
 	$SN [-NUM] [-ouv] [AMOUNT] MARKET
+	$SN [-NUM] -n [-ov] [AMOUNT] FROM_CURRENCY TO_CURRENCY
 	$SN [-NUM] [-aciorstwzX] [-u] MARKET
 	$SN [-bbt] [-u] MARKET
 	$SN [-hlV]
@@ -78,14 +79,15 @@ DESCRIPTION
 	little slower because REST depend on connecting repeatedly,
 	whereas websockets leave an open connection.
 
-	Option -n is EXPERIMENTAL and tries to fetch rates for national
-	(bank) currency pairs, such as \`EUR GBP', \`USD BRL', or pairs
-	that are neither supported by Binance nor their reverse, such as
-	\`XRP DOGE'. BEWARE these rates are Binance-specific and may be
-	up to ~1-2% off from rates elsewhere because I reckon Binance
-	has got diferential spreads for some currency pairs and possibly
-	between Binance Malta and Binance US, which become explicit when
-	calculating custom rates.
+	Option -n calculates rates for national (bank) currency pairs,
+	such as \`EUR GBP', \`USD BRL', or pairs that are neither sup-
+	ported by Binance nor their reverse, such as \`XRP DOGE'. Some
+	market rates may have implicit Binance spreads when calculated,
+	which may be up to ~1-2% off from rates elsewhere. I reckon
+	Binance has got diferential spreads for some currency pairs and
+	possibly between Binance Malta and Binance US, which become
+	evident when calculating custom rates with this option, see usage
+	example (7).
 
 
 LIMITS ON WEBSOCKET
@@ -93,7 +95,7 @@ LIMITS ON WEBSOCKET
 
 		<<A single connection to stream.binance.com is only
 		valid for 24 hours; expect to be disconnected at the
-		24 hour mark.>>
+		24 hour mark>>
 
 	<binance-docs.github.io/apidocs/spot/en/#symbol-order-book-ticker>
 
@@ -160,6 +162,12 @@ USAGE EXAMPLES
 		ending  with xxxBTC.
 
 
+	(7)     Calculate rates for EUR against GBP (some other
+		markets may have spreads calculated with them):
+		
+		$ $SN -n eur gbp 
+
+
 OPTIONS
 	Formatting
 	-NUM 	   Decimal plate setting (scale).
@@ -171,15 +179,12 @@ OPTIONS
 	-d 	   Print raw data from API, for debugging.
 	-h 	   Show this help.
 	-j 	   Set <binance.je> server; defaults=<binance.com>.
+	-l 	   List supported markets.
 	-r 	   Set Curl/Wget instead of websocket with options -swi .
 	-u 	   Set <binance.us> server; defaults=<binance.com>.
 	-V 	   Print script version.
 	-v 	   Print market pair.
 	-X 	   Set Wscat instead of Websocat package for websockets.
-	-n 	   Fetch rates for national (bank) currency pairs or
-		   unsupported pairs, EXPERIMENTAL, custom rates are
-		   specific for Binance and spreads may be up to ~1-2%
-		   off from rates elsewhere.
 	
 	Functions
 	-b  [LEVELS] MARKET
@@ -192,7 +197,10 @@ OPTIONS
 		   fetched at a time; max=1000; defaults=250.
 	-i  MARKET 
 		   Detailed information of the trade stream.
-	-l 	   List supported markets.
+	-n [AMOUNT] FROM_CURRENCY TO_CURRENCY
+		   Fetch rates for national (bank) currency pairs or
+		   unsupported pairs; some market rates may have
+		   implicit spreads when calculated.
 	-t  MARKET Rolling 24h ticker.
 	-s  MARKET Stream of latest trades.
 	-w  MARKET Coloured stream of latest trades, requires lolcat.
