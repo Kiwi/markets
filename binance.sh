@@ -212,7 +212,7 @@ OPTIONS
 #national (bank) currency function
 #rates `may' differ up to ~1-2% from elsewhere
 #that is because Binance has got spreads that
-#are taken into account these rates are calculated
+#are taken into account these customrates are calculated
 bankf()
 {
 	local WHICHB LISTADDR MARKETS MKT REVMKT ADDR DATA BRATE RATE whichs c
