@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.11.1  feb/2021  by mountaineerbr
+# v0.11.2  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -210,9 +210,9 @@ OPTIONS
 #functions
 
 #national (bank) currency function
-#EXPERIMENTAL, rates `may' differ
-#up to ~2% or more from elsewhere
-#rates are specific for Binance
+#rates `may' differ up to ~1-2% from elsewhere
+#that is because Binance has got spreads that
+#are taken into account these rates are calculated
 bankf()
 {
 	local WHICHB LISTADDR MARKETS MKT REVMKT ADDR DATA BRATE RATE whichs c
