@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.10.24  feb/2021  by mountaineerbr
+# v0.11  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -35,11 +35,12 @@ SYNOPSIS
 	$SN [-bbt] [-u] MARKET
 	$SN [-hlV]
 
-
 	Get the latest data from Binance markets from public APIs. This 
 	script can calculate any amount of one cryptocurrency into
 	another crypto or supported bank currency.
 
+
+DESCRIPTION
 	MARKET is formed by a currency pair. Currency pair symbols should 
 	preferably be separated by a blank space.
 
@@ -76,6 +77,15 @@ SYNOPSIS
 	Setting options for REST APIs instead of websockets update
 	little slower because REST depend on connecting repeatedly,
 	whereas websockets leave an open connection.
+
+	Option -n is EXPERIMENTAL and tries to fetch rates for national
+	(bank) currency pairs, such as \`EUR GBP', \`USD BRL', or pairs
+	that are neither supported by Binance nor their reverse, such as
+	\`XRP DOGE'. BEWARE these rates are Binance-specific and may be
+	up to ~1-2% off from rates elsewhere because I reckon Binance
+	has got diferential spreads for some currency pairs and possibly
+	between Binance Malta and Binance US, which become explicit when
+	calculating custom rates.
 
 
 LIMITS ON WEBSOCKET
@@ -166,6 +176,10 @@ OPTIONS
 	-V 	   Print script version.
 	-v 	   Print market pair.
 	-X 	   Set Wscat instead of Websocat package for websockets.
+	-n 	   Fetch rates for national (bank) currency pairs or
+		   unsupported pairs, EXPERIMENTAL, custom rates are
+		   specific for Binance and spreads may be up to ~1-2%
+		   off from rates elsewhere.
 	
 	Functions
 	-b  [LEVELS] MARKET
@@ -186,6 +200,81 @@ OPTIONS
 
 
 #functions
+
+#national (bank) currency function
+#EXPERIMENTAL, rates `may' differ
+#up to ~2% or more from elsewhere
+#rates are specific for Binance
+bankf()
+{
+	local WHICHB LISTADDR MARKETS MKT REVMKT ADDR DATA BRATE RATE whichs c
+	typeset -a whichs
+
+	#for each currency
+	for c in "${@:2:2}"
+	do
+		#try Binance Malta and Binance US
+		for WHICHB in com us
+		do
+			#verbose
+			((OPTV)) && echo "Server: Binance.${WHICHB}" >&2
+
+			#get supported market list
+			LISTADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
+			MARKETS="$( "${YOURAPP[@]}" "$LISTADDR" | jq -r '.[].symbol' )"
+
+			#check and see if reverse market rate is in order
+			if ! grep -qi "^BTC${c}$" <<< "$MARKETS" &&
+				grep -qi "^${c}BTC$" <<< "$MARKETS"
+			then
+				REVMKT=1/
+
+				#verbose
+				((OPTV)) && echo "Reverse rate of supported market: $c BTC" >&2
+			elif ! grep -qi "^BTC${c}$" <<< "$MARKETS"
+			then
+				if [[ "$WHICHB" = us ]]
+				then
+					echo "err: invalid currency -- $c" >&2
+					return 1
+				else
+					continue
+				fi
+			fi
+
+			#save selected binance server
+			whichs+=( "$WHICHB" )
+
+			#set market (is the reverse market rate?)
+			[[ -z "$REVMKT" ]] && MKT="BTC${c}" || MKT="${c}BTC"
+
+			#address for default func (get rates only)
+			ADDR="https://api.binance.${WHICHB}/api/v3/ticker/price?symbol=$MKT" 
+			#get data
+			DATA="$( "${YOURAPP[@]}" "$ADDR" )"
+			#print raw data for debug?
+			(( DOPT )) && echo "$DATA" && continue
+
+			BRATE=$( jq -er .price <<<"$DATA" )
+			RATE="$( bc <<< "scale=20 ; ( $1 ) * ( $REVMKT $BRATE )" )"
+
+			break
+		done
+		
+		[[ -z "$FROMRATE" ]] && FROMRATE="$RATE" || TORATE="$RATE"
+
+		unset ADDR DATA MKT BRATE RATE R c
+	done
+
+	#verbose
+	((OPTV)) && echo "Selected servers: ${whichs[*]}" >&2
+
+	#debug opt is enabled?
+	(( DOPT )) && return
+
+	#calculate result and print raw result
+	bc <<< "scale=16; ( (${1}) * ${TORATE})/${FROMRATE}"
+}
 
 #error check
 errf() {
@@ -522,32 +611,31 @@ tickerf() {
 lcoinsf() {
 	#set addr
 	ADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
+
+	#get data
+	DATA="$( "${YOURAPP[@]}" "$ADDR" )"
 	
 	#print raw data for debug?
 	if (( DOPT ))
 	then
-		"${YOURAPP[@]}" "$ADDR"
-		echo
+		echo "$DATA"
 		exit 
 	fi
 
 	#get data
-	LDATA="$( "${YOURAPP[@]}" "$ADDR" )"
+	PRELIST="$(jq -er '.[] | "\(.symbol)\t\(.price)"' <<< "$DATA")" || return
 	
-	#process data
-	jq -r '.[] | "\(.symbol)\t\(.price)"' <<< "$LDATA" | 
-		sort | column -s$'\t' -et -N 'Market,Rate'
+	#format data
+	<<<"$PRELIST" sort | column -s$'\t' -et -N 'Market,Rate'
 	
 	#stats
-	printf 'Markets: %s\n' "$(jq -r '.[].symbol' <<< "$LDATA"| wc -l)"
+	printf 'Markets: %s\n' "$(jq -r '.[].symbol' <<< "$DATA"| wc -l)"
 	printf '<https://api.binance.%s/api/v3/ticker/price>\n' "$WHICHB"
-
-	exit
 }
 
 
 #parse options
-while getopts 1234567890abcdofhjlistuvVwrXz opt
+while getopts 1234567890abcdofhjlnistuvVwrXz opt
 do
 	case $opt in
 		[0-9]) #scale setting
@@ -556,11 +644,11 @@ do
 		a) 	#autoreconnect
 			AUTOR=( - autoreconnect: )
 			;;
-		c) #price in columns
-			COPT=1
-			;;
 		b) #order book depth view
 			(( BOPT )) && BOPT=2 ||	BOPT=1
+			;;
+		c) #price in columns
+			COPT=1
 			;;
 		d) #print lines that fetch data
 			#printf 'Script cmds to fetch data:\n'
@@ -583,6 +671,10 @@ do
 			;;
 		l) #list markets
 			LOPT=1
+			;;
+		n)
+			#bank/national currencies
+			BANK=1
 			;;
 		r) #curl instead of websocat
 			CURLOPT=1
@@ -638,17 +730,19 @@ else
 	exit 1
 fi
 
+#call opt funcs
+(( LOPT )) && { lcoinsf ;exit ;}
+
 #set websocket pkg
 #websocat command
 if
 	[[ -n "$IOPT$SOPT$BOPT$TOPT" ]] &&
 	[[ -z "$CURLOPT" ]]
 then
-
+	#choose websocat or wscat
 	if ((XOPT==0)) && command -v websocat &>/dev/null
 	then
 		WEBSOCATC=( websocat -nt --ping-interval 20 -E --ping-timeout 42 ${AUTOR[0]} )
-
 	elif command -v wscat &>/dev/null
 	then
 		unset AUTOR
@@ -657,13 +751,10 @@ then
 		echo "$SN: websocat or wscat is required" >&2
 		exit 1
 	fi
+	
+	#set websocket address
+	WSSADD="${AUTOR[1]}wss://stream.binance.${WHICHB}:9443/ws/"
 fi
-
-#websocket address
-WSSADD="${AUTOR[1]}wss://stream.binance.${WHICHB}:9443/ws/"
-
-#call opt func
-(( LOPT )) && lcoinsf
 
 #make printf string (1)
 [[ -z "$THOUSANDOPT$SCL" ]] && FSTR=%s
@@ -677,11 +768,11 @@ then
 	[[ -n "$THOUSANDOPT" ]] && SCL=2
 fi
 
-#make printf string (2)
+#make printf formatting string
 [[ -z "$FSTR" ]] && FSTR="%${THOUSANDOPT}.${SCL}f"
 
 #arrange arguments
-#if first arg does not have numbers OR isn't a valid bc expression
+#if first arg does not have numbers OR isnt a valid bc expression
 if [[ "$1" != *[0-9]* ]] ||
 	[[ -z "$( bc -l <<< "$1" 2>/dev/null )" ]]
 then
@@ -705,24 +796,8 @@ set -- "${@^^}"
 #set btc as 'from_currency' for market code formation
 [[ -z "$2" ]] && set -- "$1" BTC
 
-#get market symbol list
-#set addr
-ADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
-
-#print raw data for debug?
-if (( DOPT ))
-then
-	#"${YOURAPP[@]}" "$ADDR"
-	echo "$SN: market symbol list json is ommited" >&2
-	printf '\n\n'
-fi
-
-MARKETS="$( "${YOURAPP[@]}" "$ADDR" | jq -r '.[].symbol' )"
-
-#check if input is a valid market
 #set to_currency if none given
-if [[ -z "$3" ]] &&
-	! grep -qi "^${2}$" <<< "$MARKETS"
+if [[ -z "$3" ]]
 then
 	#set default vs currency
 	if [[ "$WHICHB" = us ]]
@@ -739,14 +814,23 @@ then
 	fi
 fi 
 
-#test if market is valid
-if ! grep -qi "^${2}${3}$" <<< "$MARKETS"
+#get supported market list, required for following funcs
+LISTADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
+MARKETS="$( "${YOURAPP[@]}" "$LISTADDR" | jq -r '.[].symbol' )"
+
+#test if market/currency is valid
+if ((BANK==0)) &&
+	! grep -qi "^${2}${3}$" <<< "$MARKETS"
 then
-	#if default option, try to get rate of the reverse market
+	#default option
+	#check and see if reverse market rate is in order
 	if [[ -z "$IOPT$SOPT$BOPT$BOPT$TOPT$COPT" ]] &&
 		grep -qi "^${3}${2}$" <<< "$MARKETS"
 	then
 		REVMKT=1/
+
+		#verbose
+		((OPTV)) && echo "Reverse rate of supported market: $3 $2" >&2
 	else
 		echo "$SN: unsupported market -- ${@:2:2}" >&2
 		if (( ${#2} > 4 ))
@@ -756,7 +840,6 @@ then
 		exit 1
 	fi
 fi
-
 
 #call opt functions
 #detailed trade info
@@ -787,27 +870,36 @@ then
 #default function -- market rates
 else
 	#verbose
-	((OPTV)) && echo Input: "${@:1:3}"
+	((OPTV)) && echo "Input:" "${@:1:3}"
 
-	#set market
-	[[ -z "$REVMKT" ]] && MKT="$2$3" || MKT="$3$2"
-
-	#set addr
-	ADDR="https://api.binance.${WHICHB}/api/v3/ticker/price?symbol=$MKT" 
-
-	#get data
-	DATA="$( "${YOURAPP[@]}" "$ADDR" )"
-	
-	#print raw data for debug?
-	if (( DOPT ))
+	#call opt funcs
+	#national (bank) currencies?
+	if ((BANK))
 	then
-		echo "$DATA"
-		echo
-		exit 
-	fi
+		#call national currency function
+		#EXPERIMENTAl function
+		#rates are specific for Binance
+		R="$( bankf "$@" )"
+	else
+		#defaults
+		#set market (is the reverse market rate?)
+		[[ -z "$REVMKT" ]] && MKT="$2$3" || MKT="$3$2"
 
-	BRATE=$( jq -r .price <<<"$DATA" )
-	R="$( bc <<< "scale=16 ; ( $1 ) * ( $REVMKT $BRATE )" )"
+		#address for default func (get rates only)
+		ADDR="https://api.binance.${WHICHB}/api/v3/ticker/price?symbol=$MKT" 
+		#get data
+		DATA="$( "${YOURAPP[@]}" "$ADDR" )"
+		
+		#print raw data for debug?
+		if (( DOPT ))
+		then
+			echo "$DATA"
+			exit 
+		fi
+
+		BRATE=$( jq -r .price <<<"$DATA" )
+		R="$( bc <<< "scale=16 ; ( $1 ) * ( $REVMKT $BRATE )" )"
+	fi
 	
 	#calc and printf results
 	printf "${FSTR}\n" "$R"
