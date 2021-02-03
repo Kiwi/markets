@@ -1,6 +1,6 @@
 #!/bin/bash
 # cgk.sh -- coingecko.com api access
-# v0.13.28  feb/2021  by mountaineerbr
+# v0.14  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -515,20 +515,15 @@ bankf()
 	clistf
 	tolistf
 	
-	# Grep possible currency ids
+	#get data to check currency names and symbols
 	local keys=( $( jq -r '.[],keys[]' "$CGKTEMPLIST1" ) )
-
-	if [[ \ "${keys[*]}"\  = *\ "${2,,}"\ * ]]
-	then
-		changevscf "$2" 2>/dev/null &&
-			MAYBE1="${GREPID}"
-	fi
-	if [[ \ "${keys[*]}"\  = *\ "${3,,}"\ * ]]
-	then
-		changevscf "$3" 2>/dev/null &&
-			MAYBE2="${GREPID}"
-	fi
-
+	#check and change currency ids
+	[[ \ "${keys[*]}"\  = *\ "${2,,}"\ * ]] &&
+		MAYBE1="$( changevscf "$2" )" &&
+		set -- "$1" "$MAYBE1" "$3"
+	[[ \ "${keys[*]}"\  = *\ "${3,,}"\ * ]] &&
+		MAYBE2="$( changevscf "$3" )" &&
+		set -- "$1" "$2" "$MAYBE2"
 
 	if [[ "${2,,}" = xa[ug] ]]
 	then
@@ -898,51 +893,49 @@ tolistf()
 }
 
 # Change currency code to ID in FROM_CURRENCY
-# export currency id as GREPID
 changevscf()
 {
-	local symbol="${1,,}"
+	local symbol grepid
+	symbol="${1,,}"
 
 	#is a know fiat?
 	if [[ \ "${FIATCODES[*]}"\  = *\ "$symbol"\ * ]]
 	then
-		unset GREPID
+		echo "$symbol"
+		return 1
+	#try to match in currency list
+	elif grepid="$( jq -r ".${symbol}? // empty" "$CGKTEMPLIST1" )" &&
+		[[ -n "${grepid//null}" ]]
+	then
+		echo "$grepid"
+		return 0
+	else
+		echo "$symbol"
 		return 1
 	fi
-
-	#try to match in currency list
-	if GREPID="$( jq -er ".$symbol // empty" "$CGKTEMPLIST1" )" &&
-		[[ -n "${GREPID//null}" ]]
-	then
-		return 0
-	fi
-	
-	unset GREPID
-	return 1
 }
 
 # Change currency code to ID in FROM_CURRENCY
-# export currency id as GREPID
 changetocf()
 {
-	local id="${1,,}"
+	local grepid id
+	id="${1,,}"
 
 	#is a know fiat?
 	if [[ \ "${FIATCODES[*]}"\  = *\ "$id"\ * ]]
 	then
-		unset GREPID
+		echo "$id"
+		return 1
+	#try to match in currency list
+	elif grepid="$( jq -r "to_entries| map(select(.value==\"$id\")) | .[] | .key? // empty" "$CGKTEMPLIST1" )" &&
+		[[ -n "${grepid//null}" ]]
+	then
+		echo "$grepid"
+		return 0
+	else
+		echo "$id"
 		return 1
 	fi
-
-	#try to match in currency list
-	if GREPID="$( jq -r "to_entries| map(select(.value==\"$id\")) | .[] | .key // empty" "$CGKTEMPLIST1" )" &&
-		[[ -n "${GREPID//null}" ]]
-	then
-		return 0
-	fi
-
-	unset GREPID
-	return 1
 }
 
 # Precious metals in grams?
@@ -1044,7 +1037,6 @@ curcheckf()
 mainf()
 {
 	local rate
-	unset GREPID
 
 	#if $CGKRATERAW is set, it is from bank function
 	if [[ -f "${CGKRATERAW}" ]]
@@ -1289,9 +1281,7 @@ fi
 clistf
 
 # Check if we can get correct from and to_currency IDs/symbols
-changevscf "$2" && set -- "$1" "$GREPID" "$3"
-changetocf "$3" && set -- "$1" "$2" "$GREPID"
-unset GREPID
+set -- "$1" "$(changevscf "$2")" "$(changetocf "$3")"
 
 ## Check currency codes
 curcheckf "$@"
