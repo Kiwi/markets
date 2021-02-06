@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.11.2  feb/2021  by mountaineerbr
+# v0.11.3  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -87,7 +87,8 @@ DESCRIPTION
 	Binance has got diferential spreads for some currency pairs and
 	possibly between Binance Malta and Binance US, which become
 	evident when calculating custom rates with this option, see usage
-	example (7).
+	example (7). This option is set automatically if the script cannot
+	fetch rates for user-input market pair with the defaults function.
 
 
 LIMITS ON WEBSOCKET
@@ -216,7 +217,10 @@ OPTIONS
 bankf()
 {
 	local WHICHB LISTADDR MARKETS MKT REVMKT ADDR DATA BRATE RATE whichs c
-	typeset -a whichs
+	typeset -a MARKETS whichs
+
+	#verbose?
+	((OPTV)) && echo Spread fees may apply >&2
 
 	#for each currency
 	for c in "${@:2:2}"
@@ -229,17 +233,17 @@ bankf()
 
 			#get supported market list
 			LISTADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
-			MARKETS="$( "${YOURAPP[@]}" "$LISTADDR" | jq -r '.[].symbol' )"
+			readarray -t MARKETS <<<"$( "${YOURAPP[@]}" "$LISTADDR" | jq -r '.[].symbol' )"
 
 			#check and see if reverse market rate is in order
-			if ! grep -qi "^BTC${c}$" <<< "$MARKETS" &&
-				grep -qi "^${c}BTC$" <<< "$MARKETS"
+			if [[ ! \ "${MARKETS[*]}"\  = *\ BTC${c^^}\ * ]] &&
+				[[ \ "${MARKETS[*]}"\  = *\ ${c^^}BTC\ * ]]
 			then
 				REVMKT=1/
 
 				#verbose
 				((OPTV)) && echo "Reverse rate of supported market: $c BTC" >&2
-			elif ! grep -qi "^BTC${c}$" <<< "$MARKETS"
+			elif [[ ! \ "${MARKETS[*]}"\  = *\ BTC${c^^}\ * ]]
 			then
 				if [[ "$WHICHB" = us ]]
 				then
@@ -282,6 +286,38 @@ bankf()
 
 	#calculate result and print raw result
 	bc <<< "scale=16; ( (${1}) * ${TORATE})/${FROMRATE}"
+}
+
+#check to currency
+checktocurf()
+{
+	#get supported market list, required for following funcs
+	if (( ${#MARKETS[@]} == 0 ))
+	then
+		LISTADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
+		typeset -a MARKETS
+		readarray -t MARKETS <<<"$( "${YOURAPP[@]}" "$LISTADDR" | jq -r '.[].symbol' )"
+	fi
+
+	#test if market/currency is valid
+	if ((BANK==0)) &&
+		[[ ! \ "${MARKETS[*]}"\  = *\ ${2^^}${3^^}\ * ]]
+	then
+		#default option
+		#check and see if reverse market rate is available
+		if [[ -z "$IOPT$SOPT$BOPT$BOPT$TOPT$COPT" ]] &&
+			[[ \ "${MARKETS[*]}"\  = *\ ${3^^}${2^^}\ * ]]
+		then
+			REVMKT=1/
+
+			#verbose
+			((OPTV)) && echo "Reverse rate of supported market: $3 $2" >&2
+		else
+			return 1
+		fi
+	fi
+
+	return 0
 }
 
 #error check
@@ -786,6 +822,8 @@ if [[ "$1" != *[0-9]* ]] ||
 then
 	set -- 1 "${@:1:2}"
 fi
+#save user args
+UARGS=("$@")
 
 #split pairs such as XRP/BTC, XRP,BTC, XRP-BTC and XRP.BTC
 spliters='\/,.-'
@@ -804,50 +842,40 @@ set -- "${@^^}"
 #set btc as 'from_currency' for market code formation
 [[ -z "$2" ]] && set -- "$1" BTC
 
-#set to_currency if none given
-if [[ -z "$3" ]]
+#check again and set $REVMKT if needed
+#or set to_currency if none given
+if [[ -z "$3" ]] && ! checktocurf "$@"
 then
-	#set default vs currency
+	#set default vs_currency
 	if [[ "$WHICHB" = us ]]
-	then
-		#Binance US
-		set -- "$1" "$2" USD
+	then set -- "$1" "$2" USD  #Binance US
 	elif [[ "$WHICHB" = je ]]
-	then
-		#Binance Jersey (DEPRECATED)
-		set -- "$1" "$2" EUR
-	else
-		#Binance.com (Malta)
-		set -- "$1" "$2" USDT
+	then set -- "$1" "$2" EUR  #Binance Jersey (DEPRECATED)
+	else set -- "$1" "$2" USDT #Binance.com (Malta)
 	fi
 fi 
-
-#get supported market list, required for following funcs
-LISTADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
-MARKETS="$( "${YOURAPP[@]}" "$LISTADDR" | jq -r '.[].symbol' )"
-
-#test if market/currency is valid
-if ((BANK==0)) &&
-	! grep -qi "^${2}${3}$" <<< "$MARKETS"
+	
+#check again and set $REVMKT if needed
+if ! checktocurf "$@"
 then
-	#default option
-	#check and see if reverse market rate is in order
-	if [[ -z "$IOPT$SOPT$BOPT$BOPT$TOPT$COPT" ]] &&
-		grep -qi "^${3}${2}$" <<< "$MARKETS"
+	#try setting the bank function automatically?
+	#call national currency function
+	#rates may contain Binance spread for some markets
+	if
+		#verbose?
+		((OPTV)) && echo Setting option -n automatically.. >&2
+		R="$( bankf "$@" )"
 	then
-		REVMKT=1/
-
-		#verbose
-		((OPTV)) && echo "Reverse rate of supported market: $3 $2" >&2
+		#calc and printf results
+		printf "${FSTR}\n" "$R"
+		exit 0
 	else
-		echo "$SN: unsupported market -- ${@:2:2}" >&2
-		if (( ${#2} > 4 ))
-		then
-			echo "$SN: try to add a space between market symbols" >&2
-		fi
+		echo "$SN: unsupported market -- ${UARGS[@]:1:2}" >&2
+		(( ${#2} > 4 )) && echo "$SN: try adding a space between currency symbols" >&2
 		exit 1
 	fi
 fi
+
 
 #call opt functions
 #detailed trade info
@@ -885,9 +913,8 @@ else
 	if ((BANK))
 	then
 		#call national currency function
-		#EXPERIMENTAl function
-		#rates are specific for Binance
-		R="$( bankf "$@" )"
+		#rates may contain Binance spread for some markets
+		R="$( bankf "$@" )" || exit
 	else
 		#defaults
 		#set market (is the reverse market rate?)
