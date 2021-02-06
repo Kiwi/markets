@@ -1,6 +1,6 @@
 #!/bin/bash
 # Binance.sh  --  Market data from Binance public APIs
-# v0.11.3  feb/2021  by mountaineerbr
+# v0.11.4  feb/2021  by mountaineerbr
 
 #defaults
 
@@ -229,7 +229,7 @@ bankf()
 		for WHICHB in com us
 		do
 			#verbose
-			((OPTV)) && echo "Server: Binance.${WHICHB}" >&2
+			((OPTV)) && echo "Checking server: Binance.${WHICHB}" >&2
 
 			#get supported market list
 			LISTADDR="https://api.binance.${WHICHB}/api/v3/ticker/price" 
